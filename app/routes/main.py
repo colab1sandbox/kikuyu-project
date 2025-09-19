@@ -176,11 +176,17 @@ def translate_v2():
 
 @main_bp.route('/translate-success/<int:translation_id>')
 def translate_success(translation_id):
-    """Success page after translation submission with immediate next action"""
+    """Success page after translation submission with thank you message"""
     user = get_or_create_user()
 
-    # Quick redirect to next translation for seamless flow
-    return redirect(url_for('main.translate'))
+    # Get basic stats for display
+    from app.utils import get_translation_stats
+    stats = get_translation_stats()
+
+    return render_template('translate_success.html',
+                         user=user,
+                         translation_id=translation_id,
+                         stats=stats)
 
 
 @main_bp.route('/thank-you')

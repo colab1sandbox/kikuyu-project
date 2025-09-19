@@ -5,10 +5,13 @@
 {% block extra_head %}
 <style>
     .hero-bg {
-        background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4)), url('{{ url_for("static", filename="kikuyu.jpg") }}');
+        background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.2)), url('{{ url_for("static", filename="kikuyu.jpg") }}');
         background-size: cover;
         background-position: center;
-        background-attachment: fixed;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
     }
 </style>
 {% endblock %}
