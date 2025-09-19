@@ -67,11 +67,9 @@ def create_app(config_name=None):
         from app.routes import main_bp
         app.register_blueprint(main_bp)
 
-    # Ensure database tables exist with updated schema
+    # Ensure database tables exist
     with app.app_context():
-        # Force schema recreation for PostgreSQL migration
-        # This ensures column constraints are updated
-        db.drop_all()
+        # Create tables if they don't exist (preserves existing data)
         db.create_all()
 
         # Initialize hybrid system data
