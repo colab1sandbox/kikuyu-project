@@ -119,44 +119,31 @@
 }
 
 .floating-actions {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    position: static;
     display: flex;
+    justify-content: center;
     gap: 12px;
-    z-index: 100;
-}
-
-@media (min-width: 768px) {
-    .floating-actions {
-        position: static;
-        transform: none;
-        justify-content: center;
-        margin-top: 24px;
-    }
+    margin-top: 24px;
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+<div class="min-h-screen bg-white">
     <!-- Header Stats -->
     <div class="bg-white border-b border-gray-100">
         <div class="max-w-lg mx-auto px-4 py-3">
             <div class="flex items-center justify-between text-sm">
                 <div class="flex items-center space-x-4">
                     <div class="flex items-center space-x-1">
-                        <span class="text-green-600">🎯</span>
                         <span class="text-gray-600">Today: <strong class="text-gray-800">{{ user.submission_count or 0 }}</strong></span>
                     </div>
                     <div class="flex items-center space-x-1">
-                        <span class="text-blue-600">🌍</span>
                         <span class="text-gray-600">Total: <strong class="text-gray-800">{{ stats.total_translations or 0 }}</strong></span>
                     </div>
                 </div>
                 <button class="guidelines-toggle" onclick="toggleGuidelines()">
-                    📖 Guidelines
+                    Guidelines
                 </button>
             </div>
         </div>
@@ -166,19 +153,24 @@
     <div id="guidelines" class="guidelines-content bg-amber-50 border-b border-amber-200">
         <div class="max-w-lg mx-auto px-4 py-4">
             <div class="text-sm text-amber-800 space-y-2">
-                <p><strong>🎯 Quality Matters:</strong> Provide accurate translations to preserve Kikuyu heritage.</p>
+                <p><strong>Quality Matters:</strong> Provide accurate translations to preserve Kikuyu heritage.</p>
                 <ul class="space-y-1 ml-4">
                     <li>• Translate meaning, not word-for-word</li>
                     <li>• Use proper Kikuyu grammar</li>
                     <li>• Skip if unsure rather than guess</li>
                 </ul>
-                <p class="text-xs text-amber-700 pt-2">🔒 <strong>Privacy:</strong> Only translations are stored. No personal data collected.</p>
+                <p class="text-xs text-amber-700 pt-2"><strong>Privacy:</strong> Only translations are stored. No personal data collected.</p>
             </div>
         </div>
     </div>
 
     <!-- Main Translation Interface -->
     <div class="max-w-lg mx-auto px-4 py-6">
+        <!-- Important Tip -->
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+            <p class="text-sm text-blue-800"><strong>Important:</strong> Think about what the English phrase means, then express that in Kikuyu</p>
+        </div>
+
         <!-- Progress Indicator -->
         <div class="flex items-center justify-center mb-6">
             <div class="relative">
@@ -196,7 +188,7 @@
         <div class="prompt-card p-4 mb-4">
             <div class="flex items-start space-x-3">
                 <div class="w-6 h-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span class="text-xs">🇬🇧</span>
+                    <span class="text-xs font-bold">EN</span>
                 </div>
                 <div>
                     <p class="text-sm text-blue-100 mb-1">English</p>
@@ -212,13 +204,13 @@
 
             <div class="flex items-start space-x-3 mb-4">
                 <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-3">
-                    <span class="text-xs">🗣️</span>
+                    <span class="text-xs font-bold">KI</span>
                 </div>
                 <div class="flex-1">
-                    <label class="text-sm text-gray-600 mb-2 block">Kikuyu Translation</label>
+                    <label class="text-sm text-gray-600 mb-2 block">Your Translation</label>
                     {{ form.kikuyu_text(
                         class="translation-input w-full p-3 resize-none",
-                        placeholder="Andika gũcũũria kwaku kũũ...",
+                        placeholder="Write your translation here...",
                         rows="3",
                         maxlength="1000",
                         id="kikuyuText"
@@ -226,7 +218,7 @@
                     <div class="flex justify-between items-center mt-2">
                         <span class="character-count" id="charCounter">0 / 1000</span>
                         <div class="flex items-center space-x-2 text-xs text-gray-500">
-                            <span>⚡ Auto-save</span>
+                            <span>Auto-save</span>
                             <span class="w-2 h-2 bg-green-400 rounded-full" id="saveIndicator"></span>
                         </div>
                     </div>
@@ -234,20 +226,15 @@
             </div>
         </form>
 
-        <!-- Quick Tips -->
-        <div class="text-center mt-6 text-sm text-gray-500">
-            <p>💡 <strong>Tip:</strong> Think about what the English phrase means, then express that in Kikuyu</p>
-        </div>
     </div>
 
-    <!-- Floating Action Buttons (Mobile) / Bottom Actions (Desktop) -->
+    <!-- Action Buttons -->
     <div class="floating-actions">
         <button type="button" class="btn-modern btn-secondary px-4 py-3" id="skipBtn">
-            <span class="text-lg">⏭️</span>
-            <span class="hidden sm:inline ml-1">Skip</span>
+            <span class="hidden sm:inline">Skip</span>
+            <span class="sm:hidden">Skip</span>
         </button>
         <button type="submit" form="translationForm" class="btn-modern btn-primary px-6 py-3" id="submitBtn">
-            <span class="text-lg">✨</span>
             <span class="ml-1">Submit</span>
         </button>
     </div>
@@ -257,7 +244,7 @@
 <div id="toastTemplate" class="toast" style="display: none;">
     <div class="flex items-center space-x-3">
         <div class="w-8 h-8 rounded-full flex items-center justify-center" id="toastIcon">
-            <span class="text-lg">✅</span>
+            <span class="text-lg">✓</span>
         </div>
         <div>
             <p class="font-medium text-gray-800" id="toastTitle">Success!</p>
@@ -321,19 +308,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const text = textArea.value.trim();
         if (text.length < 2) {
             e.preventDefault();
-            showToast('❌', 'Too short', 'Please provide at least 2 characters', 'error');
             textArea.focus();
             return;
         }
         if (text.length > 1000) {
             e.preventDefault();
-            showToast('❌', 'Too long', 'Please keep under 1000 characters', 'error');
             textArea.focus();
             return;
         }
 
         // Success feedback
-        submitBtn.innerHTML = '<span class="text-lg">⏳</span><span class="ml-1">Saving...</span>';
+        submitBtn.innerHTML = '<span class="ml-1">Saving...</span>';
         submitBtn.disabled = true;
 
         // Don't prevent - let form submit naturally
@@ -341,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Skip functionality
     document.getElementById('skipBtn').addEventListener('click', function() {
-        this.innerHTML = '<span class="text-lg">⏳</span><span class="hidden sm:inline ml-1">Skipping...</span>';
+        this.innerHTML = '<span class="ml-1">Skipping...</span>';
         this.disabled = true;
 
         // Create skip form
@@ -408,27 +393,7 @@ function showToast(icon, title, message, type = 'success') {
     }, 3000);
 }
 
-// Handle error states from backend
-{% if error %}
-    setTimeout(() => {
-        {% if error == 'duplicate' %}
-            showToast('⚠️', 'Already submitted', 'This translation was already provided', 'error');
-        {% elif error == 'validation' %}
-            showToast('❌', 'Invalid text', 'Please check your Kikuyu translation', 'error');
-        {% elif error == 'server' %}
-            showToast('💥', 'Server error', 'Please try again in a moment', 'error');
-        {% elif error == 'form' %}
-            showToast('📝', 'Form error', 'Please check the form and try again', 'error');
-        {% endif %}
-    }, 500);
-{% endif %}
-
-// Show welcome toast on first load
-if (sessionStorage.getItem('showWelcome') !== 'false') {
-    setTimeout(() => {
-        showToast('🌍', 'Welcome!', 'Help preserve Kikuyu language');
-        sessionStorage.setItem('showWelcome', 'false');
-    }, 1000);
-}
+// Only show success message after submission
+// Error handling is done via form validation, no popups needed
 </script>
 {% endblock %}
