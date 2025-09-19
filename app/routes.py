@@ -237,9 +237,9 @@ def admin_moderate(translation_id):
     # Get action directly from form data (simplified approach)
     action = request.form.get('action')
 
-    if action in ['approved', 'rejected']:
+    if action in ['approve', 'reject']:
         # Update translation status
-        translation.status = action
+        translation.status = 'approved' if action == 'approve' else 'rejected'
 
         # Log admin action
         admin_action = AdminAction(
