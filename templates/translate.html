@@ -2,150 +2,433 @@
 
 {% block title %}Translate to Kikuyu{% endblock %}
 
+{% block extra_head %}
+<style>
+/* Modern Mobile-First Translation Interface */
+.translation-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.prompt-card {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.translation-input {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    font-size: 16px; /* Prevents zoom on iOS */
+}
+
+.translation-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.btn-modern {
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px -1px rgba(16, 185, 129, 0.4);
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+}
+
+.progress-ring {
+    width: 60px;
+    height: 60px;
+}
+
+.progress-ring circle {
+    stroke-width: 4;
+    fill: transparent;
+    stroke-dasharray: 157; /* 2 * PI * r where r = 25 */
+    stroke-dashoffset: 157;
+    transition: stroke-dashoffset 0.3s ease;
+}
+
+.guidelines-toggle {
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    color: #92400e;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.guidelines-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.guidelines-content.expanded {
+    max-height: 300px;
+}
+
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    padding: 16px 20px;
+    z-index: 1000;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+}
+
+.toast.show {
+    transform: translateX(0);
+}
+
+.character-count {
+    font-size: 12px;
+    color: #6b7280;
+    transition: color 0.2s ease;
+}
+
+.floating-actions {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 100;
+}
+
+@media (min-width: 768px) {
+    .floating-actions {
+        position: static;
+        transform: none;
+        justify-content: center;
+        margin-top: 24px;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="max-w-xl mx-auto px-4 py-8">
-    <!-- Title -->
-    <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">🌍 Help Preserve Kikuyu</h1>
-    <p class="text-center text-gray-600 mb-8">Translate the sentence below into Kikuyu and contribute to our language archive.</p>
-
-    <!-- Important Guidelines -->
-    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-        <div class="flex items-start">
-            <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                </svg>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <!-- Header Stats -->
+    <div class="bg-white border-b border-gray-100">
+        <div class="max-w-lg mx-auto px-4 py-3">
+            <div class="flex items-center justify-between text-sm">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-1">
+                        <span class="text-green-600">🎯</span>
+                        <span class="text-gray-600">Today: <strong class="text-gray-800">{{ user.submission_count or 0 }}</strong></span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <span class="text-blue-600">🌍</span>
+                        <span class="text-gray-600">Total: <strong class="text-gray-800">{{ stats.total_translations or 0 }}</strong></span>
+                    </div>
+                </div>
+                <button class="guidelines-toggle" onclick="toggleGuidelines()">
+                    📖 Guidelines
+                </button>
             </div>
-            <div class="ml-3">
-                <h3 class="text-sm font-medium text-blue-800 mb-2">📝 Translation Guidelines</h3>
-                <p class="text-sm text-blue-700 mb-2">
-                    <strong>Please provide only accurate translations.</strong> Incorrect translations can lead to misinterpretation and damage the integrity of the Kikuyu language documentation. Your translations help preserve our cultural heritage for future generations.
-                </p>
-                <ul class="text-sm text-blue-700 space-y-1">
-                    <li>• Translate the meaning, not word-for-word</li>
-                    <li>• Use proper Kikuyu grammar and spelling</li>
-                    <li>• Skip if you're unsure rather than guess</li>
+        </div>
+    </div>
+
+    <!-- Guidelines (Collapsible) -->
+    <div id="guidelines" class="guidelines-content bg-amber-50 border-b border-amber-200">
+        <div class="max-w-lg mx-auto px-4 py-4">
+            <div class="text-sm text-amber-800 space-y-2">
+                <p><strong>🎯 Quality Matters:</strong> Provide accurate translations to preserve Kikuyu heritage.</p>
+                <ul class="space-y-1 ml-4">
+                    <li>• Translate meaning, not word-for-word</li>
+                    <li>• Use proper Kikuyu grammar</li>
+                    <li>• Skip if unsure rather than guess</li>
                 </ul>
+                <p class="text-xs text-amber-700 pt-2">🔒 <strong>Privacy:</strong> Only translations are stored. No personal data collected.</p>
             </div>
         </div>
     </div>
 
-    <!-- Privacy Notice -->
-    <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
-        <div class="flex items-start">
-            <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-green-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2z" clip-rule="evenodd" />
+    <!-- Main Translation Interface -->
+    <div class="max-w-lg mx-auto px-4 py-6">
+        <!-- Progress Indicator -->
+        <div class="flex items-center justify-center mb-6">
+            <div class="relative">
+                <svg class="progress-ring transform -rotate-90">
+                    <circle cx="30" cy="30" r="25" stroke="#e5e7eb"></circle>
+                    <circle cx="30" cy="30" r="25" stroke="#3b82f6" stroke-dashoffset="120"></circle>
                 </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="text-sm font-semibold text-gray-700">{{ (user.submission_count or 0) + 1 }}</span>
+                </div>
             </div>
-            <div class="ml-3">
-                <h3 class="text-sm font-medium text-green-800 mb-2">🔒 Your Privacy</h3>
-                <p class="text-sm text-green-700">
-                    <strong>No personal data is collected.</strong> We only store your translations to build the language database. Your identity, location, and other personal information are not tracked or stored. All contributions are anonymous.
-                </p>
+        </div>
+
+        <!-- English Prompt -->
+        <div class="prompt-card p-4 mb-4">
+            <div class="flex items-start space-x-3">
+                <div class="w-6 h-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span class="text-xs">🇬🇧</span>
+                </div>
+                <div>
+                    <p class="text-sm text-blue-100 mb-1">English</p>
+                    <p class="text-lg font-medium leading-relaxed">"{{ prompt.text }}"</p>
+                </div>
             </div>
+        </div>
+
+        <!-- Translation Form -->
+        <form method="POST" id="translationForm" class="translation-card p-4">
+            {{ form.hidden_tag() }}
+            {{ form.prompt_id() }}
+
+            <div class="flex items-start space-x-3 mb-4">
+                <div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-3">
+                    <span class="text-xs">🗣️</span>
+                </div>
+                <div class="flex-1">
+                    <label class="text-sm text-gray-600 mb-2 block">Kikuyu Translation</label>
+                    {{ form.kikuyu_text(
+                        class="translation-input w-full p-3 resize-none",
+                        placeholder="Andika gũcũũria kwaku kũũ...",
+                        rows="3",
+                        maxlength="1000",
+                        id="kikuyuText"
+                    ) }}
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="character-count" id="charCounter">0 / 1000</span>
+                        <div class="flex items-center space-x-2 text-xs text-gray-500">
+                            <span>⚡ Auto-save</span>
+                            <span class="w-2 h-2 bg-green-400 rounded-full" id="saveIndicator"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Quick Tips -->
+        <div class="text-center mt-6 text-sm text-gray-500">
+            <p>💡 <strong>Tip:</strong> Think about what the English phrase means, then express that in Kikuyu</p>
         </div>
     </div>
 
-    <!-- Prompt Card -->
-    <div class="bg-white shadow-md rounded-lg p-6 mb-6 border border-gray-200">
-        <p class="text-lg text-gray-700"><strong>English:</strong> <span class="italic">"{{ prompt.text }}"</span></p>
+    <!-- Floating Action Buttons (Mobile) / Bottom Actions (Desktop) -->
+    <div class="floating-actions">
+        <button type="button" class="btn-modern btn-secondary px-4 py-3" id="skipBtn">
+            <span class="text-lg">⏭️</span>
+            <span class="hidden sm:inline ml-1">Skip</span>
+        </button>
+        <button type="submit" form="translationForm" class="btn-modern btn-primary px-6 py-3" id="submitBtn">
+            <span class="text-lg">✨</span>
+            <span class="ml-1">Submit</span>
+        </button>
     </div>
-
-    <!-- Translation Form -->
-    <form method="POST" id="translationForm" class="space-y-6">
-        {{ form.hidden_tag() }}
-        {{ form.prompt_id() }}
-
-        <!-- Textarea -->
-        <div>
-            {{ form.kikuyu_text(class="w-full p-4 border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-indigo-300 transition", placeholder="Write your Kikuyu translation here...", rows="6", maxlength="1000", id="kikuyuText") }}
-            <div class="text-sm text-gray-500 mt-1"><span id="charCounter">0 / 1000</span> characters</div>
-        </div>
-
-        <!-- Buttons -->
-        <div class="flex justify-center space-x-4">
-            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition" id="submitBtn">✅ Submit</button>
-            <button type="button" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-6 rounded-lg transition" id="skipBtn">⏭️ Skip</button>
-            <a href="{{ url_for('main.translate') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition">🔄 Next</a>
-        </div>
-    </form>
 </div>
 
-<!-- JavaScript -->
+<!-- Toast Notification Template -->
+<div id="toastTemplate" class="toast" style="display: none;">
+    <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center" id="toastIcon">
+            <span class="text-lg">✅</span>
+        </div>
+        <div>
+            <p class="font-medium text-gray-800" id="toastTitle">Success!</p>
+            <p class="text-sm text-gray-600" id="toastMessage">Translation submitted successfully</p>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const textArea = document.getElementById('kikuyuText');
     const charCounter = document.getElementById('charCounter');
     const submitBtn = document.getElementById('submitBtn');
+    const saveIndicator = document.getElementById('saveIndicator');
 
+    let saveTimeout;
+
+    // Enhanced character counter with smooth updates
     function updateCharCounter() {
         const length = textArea.value.length;
         charCounter.textContent = `${length} / 1000`;
 
-        if (length > 800) {
-            charCounter.className = 'text-yellow-600';
-        }
-        if (length > 950) {
-            charCounter.className = 'text-red-600';
-        }
-        if (length <= 800) {
-            charCounter.className = 'text-gray-500';
+        // Color transitions
+        if (length > 900) {
+            charCounter.style.color = '#ef4444';
+        } else if (length > 700) {
+            charCounter.style.color = '#f59e0b';
+        } else {
+            charCounter.style.color = '#6b7280';
         }
 
-        submitBtn.disabled = length > 1000;
-        submitBtn.style.opacity = length > 1000 ? '0.5' : '1';
-        submitBtn.style.cursor = length > 1000 ? 'not-allowed' : 'pointer';
+        // Button state
+        submitBtn.disabled = length < 2 || length > 1000;
+        submitBtn.style.opacity = submitBtn.disabled ? '0.5' : '1';
     }
 
-    textArea.addEventListener('input', updateCharCounter);
-    textArea.addEventListener('paste', () => setTimeout(updateCharCounter, 10));
-    updateCharCounter();
+    // Auto-save indication
+    function showAutoSave() {
+        saveIndicator.style.backgroundColor = '#fbbf24';
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            saveIndicator.style.backgroundColor = '#10b981';
+        }, 1000);
+    }
 
+    // Auto-resize textarea
+    function autoResize() {
+        textArea.style.height = 'auto';
+        textArea.style.height = Math.min(textArea.scrollHeight, 120) + 'px';
+    }
+
+    // Event listeners
+    textArea.addEventListener('input', function() {
+        updateCharCounter();
+        autoResize();
+        showAutoSave();
+    });
+
+    // Form submission with better UX
     document.getElementById('translationForm').addEventListener('submit', function(e) {
         const text = textArea.value.trim();
         if (text.length < 2) {
             e.preventDefault();
-            alert('Please provide a translation with at least 2 characters.');
+            showToast('❌', 'Too short', 'Please provide at least 2 characters', 'error');
             textArea.focus();
-            return false;
+            return;
         }
         if (text.length > 1000) {
             e.preventDefault();
-            alert('Translation is too long. Please keep it under 1000 characters.');
+            showToast('❌', 'Too long', 'Please keep under 1000 characters', 'error');
             textArea.focus();
-            return false;
+            return;
         }
 
-        submitBtn.innerHTML = '⏳ Submitting...';
+        // Success feedback
+        submitBtn.innerHTML = '<span class="text-lg">⏳</span><span class="ml-1">Saving...</span>';
         submitBtn.disabled = true;
+
+        // Don't prevent - let form submit naturally
     });
 
-    textArea.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+    // Skip functionality
+    document.getElementById('skipBtn').addEventListener('click', function() {
+        this.innerHTML = '<span class="text-lg">⏳</span><span class="hidden sm:inline ml-1">Skipping...</span>';
+        this.disabled = true;
+
+        // Create skip form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("main.skip_prompt", prompt_id=prompt.id) }}';
+
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrf_token';
+        csrfToken.value = '{{ csrf_token() }}';
+        form.appendChild(csrfToken);
+
+        document.body.appendChild(form);
+        form.submit();
     });
 
-    const skipBtn = document.getElementById('skipBtn');
-    if (skipBtn) {
-        skipBtn.addEventListener('click', function() {
-            skipBtn.innerHTML = '⏳ Skipping...';
-            skipBtn.disabled = true;
-
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ url_for("main.skip_prompt", prompt_id=prompt.id) }}';
-
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = 'csrf_token';
-            csrfToken.value = '{{ csrf_token() }}';
-            form.appendChild(csrfToken);
-
-            document.body.appendChild(form);
-            form.submit();
-        });
-    }
+    // Initialize
+    updateCharCounter();
+    autoResize();
+    textArea.focus();
 });
+
+// Guidelines toggle
+function toggleGuidelines() {
+    const guidelines = document.getElementById('guidelines');
+    guidelines.classList.toggle('expanded');
+}
+
+// Toast notification system
+function showToast(icon, title, message, type = 'success') {
+    const template = document.getElementById('toastTemplate');
+    const toast = template.cloneNode(true);
+    toast.id = 'toast-' + Date.now();
+    toast.style.display = 'block';
+
+    const iconEl = toast.querySelector('#toastIcon span');
+    const titleEl = toast.querySelector('#toastTitle');
+    const messageEl = toast.querySelector('#toastMessage');
+    const iconContainer = toast.querySelector('#toastIcon');
+
+    iconEl.textContent = icon;
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+
+    // Style based on type
+    if (type === 'error') {
+        iconContainer.style.backgroundColor = '#fee2e2';
+        iconContainer.style.color = '#dc2626';
+    } else {
+        iconContainer.style.backgroundColor = '#dcfce7';
+        iconContainer.style.color = '#16a34a';
+    }
+
+    document.body.appendChild(toast);
+
+    // Show toast
+    setTimeout(() => toast.classList.add('show'), 100);
+
+    // Hide toast
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Handle error states from backend
+{% if error %}
+    setTimeout(() => {
+        {% if error == 'duplicate' %}
+            showToast('⚠️', 'Already submitted', 'This translation was already provided', 'error');
+        {% elif error == 'validation' %}
+            showToast('❌', 'Invalid text', 'Please check your Kikuyu translation', 'error');
+        {% elif error == 'server' %}
+            showToast('💥', 'Server error', 'Please try again in a moment', 'error');
+        {% elif error == 'form' %}
+            showToast('📝', 'Form error', 'Please check the form and try again', 'error');
+        {% endif %}
+    }, 500);
+{% endif %}
+
+// Show welcome toast on first load
+if (sessionStorage.getItem('showWelcome') !== 'false') {
+    setTimeout(() => {
+        showToast('🌍', 'Welcome!', 'Help preserve Kikuyu language');
+        sessionStorage.setItem('showWelcome', 'false');
+    }, 1000);
+}
 </script>
 {% endblock %}

@@ -114,7 +114,7 @@ def translate_v2():
             stats = get_translation_stats()
 
             return render_template(
-                'translate_new.html',
+                'translate.html',
                 form=form,
                 prompt=prompt,
                 user=user,
@@ -139,7 +139,7 @@ def translate_v2():
                     prompt = Prompt.query.get(prompt_id)
                     from app.utils import get_translation_stats
                     stats = get_translation_stats()
-                    return render_template('translate_new.html', form=form, prompt=prompt, user=user, stats=stats, error='validation')
+                    return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats, error='validation')
 
                 # Check for duplicates
                 if check_duplicate_translation(kikuyu_text, prompt_id):
@@ -147,7 +147,7 @@ def translate_v2():
                     prompt = Prompt.query.get(prompt_id)
                     from app.utils import get_translation_stats
                     stats = get_translation_stats()
-                    return render_template('translate_new.html', form=form, prompt=prompt, user=user, stats=stats, error='duplicate')
+                    return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats, error='duplicate')
 
                 # Save translation
                 translation = save_translation(prompt_id, kikuyu_text, user)
@@ -163,7 +163,7 @@ def translate_v2():
                 prompt = Prompt.query.get(prompt_id)
                 from app.utils import get_translation_stats
                 stats = get_translation_stats()
-                return render_template('translate_new.html', form=form, prompt=prompt, user=user, stats=stats, error='server')
+                return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats, error='server')
 
         else:
             # Form validation failed
@@ -171,7 +171,7 @@ def translate_v2():
             prompt = Prompt.query.get(prompt_id) if prompt_id else None
             from app.utils import get_translation_stats
             stats = get_translation_stats()
-            return render_template('translate_new.html', form=form, prompt=prompt, user=user, stats=stats, error='form')
+            return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats, error='form')
 
 
 @main_bp.route('/translate-success/<int:translation_id>')

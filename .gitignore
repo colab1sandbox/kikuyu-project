@@ -49,3 +49,11 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+*.bak
+*.old
+*~
+
+# Local development files
+migrate_schema.py
+test_db.py
+get-docker.sh
