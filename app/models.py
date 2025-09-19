@@ -68,8 +68,8 @@ class Translation(db.Model):
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected, flagged
 
     # Optional metadata
-    ip_address = db.Column(db.String(45))  # For tracking and moderation
-    user_agent = db.Column(db.String(255))  # For tracking
+    ip_address = db.Column(db.String(200))  # For tracking and moderation (supports proxy chains)
+    user_agent = db.Column(db.String(500))  # For tracking (longer user agents)
 
     def __repr__(self):
         return f'<Translation {self.id}: {self.kikuyu_text[:30]}...>'
