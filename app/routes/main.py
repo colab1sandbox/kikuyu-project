@@ -160,11 +160,11 @@ def translate():
 
 @main_bp.route('/thank-you')
 def thank_you():
-    """Thank you page after submission with next steps"""
+    """Thank you page after submission with next steps - optimized"""
     user = get_or_create_user()
 
-    # Get user progress
-    user_translations = Translation.query.filter_by(user_id=user.id).count()
+    # Use cached submission count instead of query for speed
+    user_translations = user.submission_count
 
     # Suggest next actions
     suggestions = []

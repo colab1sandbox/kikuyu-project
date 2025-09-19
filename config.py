@@ -7,6 +7,16 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'postgresql://neondb_owner:npg_IqfGwQAXN3l1@ep-empty-leaf-a1u0aj23-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # PostgreSQL Performance Optimizations
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_size': 10,
+        'pool_timeout': 30,
+        'pool_recycle': 300,  # Recycle connections every 5 minutes
+        'max_overflow': 20,
+        'pool_pre_ping': True,  # Verify connections before use
+        'echo': False  # Disable SQL logging in production
+    }
+
     # OpenRouter Configuration
     OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY') or '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'
     OPENROUTER_MODEL = os.environ.get('OPENROUTER_MODEL') or 'meta-llama/llama-3.3-70b-instruct:free'

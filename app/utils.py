@@ -3,11 +3,12 @@ import hashlib
 from datetime import datetime
 from flask import session, request
 from functools import wraps
+from sqlalchemy import text
 from app import db
 from app.models import User, Translation, Prompt
 
 def get_or_create_user() -> User:
-    """Get or create a user based on session ID"""
+    """Get or create a user based on session ID - optimized"""
     session_id = session.get('user_session_id')
 
     if not session_id:
@@ -18,18 +19,22 @@ def get_or_create_user() -> User:
     # Try to find existing user
     user = User.query.filter_by(session_id=session_id).first()
 
+    current_time = datetime.utcnow()
+
     if not user:
         # Create new user
         user = User(
             session_id=session_id,
-            created_at=datetime.utcnow(),
-            submission_count=0
+            created_at=current_time,
+            submission_count=0,
+            last_activity=current_time
         )
         db.session.add(user)
-        db.session.commit()
+    else:
+        # Update last activity for existing user
+        user.last_activity = current_time
 
-    # Update last activity
-    user.last_activity = datetime.utcnow()
+    # Single commit for both cases
     db.session.commit()
 
     return user
@@ -61,20 +66,20 @@ def hash_text(text: str) -> str:
     return hashlib.sha256(text.lower().strip().encode('utf-8')).hexdigest()
 
 def check_duplicate_translation(kikuyu_text: str, prompt_id: int) -> bool:
-    """Check if a translation already exists"""
-    text_hash = hash_text(kikuyu_text)
+    """Check if a translation already exists - optimized for speed"""
+    # Normalize text once
+    normalized_text = kikuyu_text.lower().strip()
 
-    # Check for exact duplicate
-    existing = Translation.query.filter_by(
-        prompt_id=prompt_id
-    ).filter(
-        db.func.lower(Translation.kikuyu_text) == kikuyu_text.lower().strip()
+    # Fast query using only indexed columns
+    existing = Translation.query.filter(
+        Translation.prompt_id == prompt_id,
+        db.func.lower(Translation.kikuyu_text) == normalized_text
     ).first()
 
     return existing is not None
 
 def save_translation(prompt_id: int, kikuyu_text: str, user: User) -> Translation:
-    """Save a new translation to the database"""
+    """Save a new translation to the database - optimized for speed"""
     client_info = get_client_info()
 
     translation = Translation(
@@ -87,16 +92,19 @@ def save_translation(prompt_id: int, kikuyu_text: str, user: User) -> Translatio
         user_agent=client_info['user_agent']
     )
 
+    # Batch all operations in single transaction
     db.session.add(translation)
 
-    # Update user submission count
+    # Update user submission count (already in session)
     user.submission_count += 1
 
-    # Update prompt usage count
-    prompt = Prompt.query.get(prompt_id)
-    if prompt:
-        prompt.usage_count += 1
+    # Update prompt usage count with efficient update
+    db.session.execute(
+        text("UPDATE prompts SET usage_count = usage_count + 1 WHERE id = :prompt_id"),
+        {"prompt_id": prompt_id}
+    )
 
+    # Single commit for all operations
     db.session.commit()
 
     return translation
