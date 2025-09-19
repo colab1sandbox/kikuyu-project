@@ -1,20 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Translation Submitted - Kikuyu Translation{% endblock %}
+{% block title %}Thank You - Kikuyu Translation{% endblock %}
 
 {% block extra_head %}
 <style>
-.success-card {
+.thank-you-card {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     border-radius: 16px;
     box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);
-}
-
-.stats-card {
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .btn-continue {
@@ -33,20 +26,6 @@
     box-shadow: 0 6px 8px -1px rgba(59, 130, 246, 0.4);
 }
 
-.btn-secondary {
-    background: #f3f4f6;
-    color: #374151;
-    border: 1px solid #d1d5db;
-    border-radius: 12px;
-    font-weight: 600;
-    transition: all 0.2s ease;
-}
-
-.btn-secondary:hover {
-    background: #e5e7eb;
-    transform: translateY(-1px);
-}
-
 .celebration {
     animation: celebrate 0.6s ease-out;
 }
@@ -60,85 +39,26 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-white">
-    <div class="max-w-lg mx-auto px-4 py-8">
-
-        <!-- Success Message Card -->
-        <div class="success-card p-6 mb-6 text-white celebration">
-            <div class="text-center">
-                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span class="text-2xl font-bold">✓</span>
-                </div>
-                <h1 class="text-2xl font-bold mb-2">Thank You!</h1>
-                <p class="text-green-100 mb-4">Your translation has been submitted successfully and will help preserve the Kikuyu language for future generations.</p>
-                <div class="bg-white bg-opacity-10 rounded-lg p-3">
-                    <p class="text-sm">Translation #{{ translation_id }} submitted</p>
-                </div>
+<div class="min-h-screen bg-white flex items-center justify-center">
+    <div class="max-w-md mx-auto px-4">
+        <!-- Simple Thank You Card -->
+        <div class="thank-you-card p-8 text-white celebration text-center">
+            <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="text-2xl font-bold">✓</span>
             </div>
-        </div>
+            <h1 class="text-2xl font-bold mb-8">Thank you for your contribution</h1>
 
-        <!-- User Progress Stats -->
-        <div class="stats-card p-4 mb-6">
-            <h3 class="font-semibold text-gray-800 mb-3">Your Contribution</h3>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-blue-600">{{ user.submission_count or 0 }}</div>
-                    <div class="text-sm text-gray-600">Your translations</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-green-600">{{ stats.total_translations or 0 }}</div>
-                    <div class="text-sm text-gray-600">Total community</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Impact Message -->
-        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-            <p class="text-sm text-blue-800">
-                <strong>Making a difference:</strong> Every translation you provide helps build a comprehensive digital archive of the Kikuyu language, ensuring its preservation for future generations.
-            </p>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="space-y-3">
             <a href="{{ url_for('main.translate') }}" class="btn-continue w-full py-3 px-6 text-center block">
                 Continue Translating
             </a>
-            <a href="{{ url_for('main.index') }}" class="btn-secondary w-full py-3 px-6 text-center block">
-                Return to Home
-            </a>
-        </div>
-
-        <!-- Encouragement -->
-        <div class="text-center mt-6 text-sm text-gray-500">
-            {% if user.submission_count == 1 %}
-                <p>Great start! Consider doing a few more to help grow the database.</p>
-            {% elif user.submission_count < 5 %}
-                <p>You're doing great! Keep up the excellent work.</p>
-            {% elif user.submission_count < 10 %}
-                <p>Amazing contribution! You're making a real impact.</p>
-            {% else %}
-                <p>Incredible dedication! You're a true language preservation champion.</p>
-            {% endif %}
         </div>
     </div>
 </div>
 
 <script>
-// Auto-redirect after 10 seconds if user doesn't interact
+// Auto-redirect after 5 seconds
 setTimeout(function() {
-    if (document.visibilityState === 'visible') {
-        window.location.href = '{{ url_for("main.translate") }}';
-    }
-}, 10000);
-
-// Cancel auto-redirect if user interacts with page
-document.addEventListener('click', function() {
-    clearTimeout();
-});
-
-document.addEventListener('keypress', function() {
-    clearTimeout();
-});
+    window.location.href = '{{ url_for("main.translate") }}';
+}, 5000);
 </script>
 {% endblock %}

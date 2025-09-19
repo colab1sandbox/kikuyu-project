@@ -130,22 +130,12 @@
 
 {% block content %}
 <div class="min-h-screen bg-white">
-    <!-- Header Stats -->
+    <!-- Header with Guidelines -->
     <div class="bg-white border-b border-gray-100">
-        <div class="max-w-lg mx-auto px-4 py-3">
-            <div class="flex items-center justify-between text-sm">
-                <div class="flex items-center space-x-4">
-                    <div class="flex items-center space-x-1">
-                        <span class="text-gray-600">Today: <strong class="text-gray-800">{{ user.submission_count or 0 }}</strong></span>
-                    </div>
-                    <div class="flex items-center space-x-1">
-                        <span class="text-gray-600">Total: <strong class="text-gray-800">{{ stats.total_translations or 0 }}</strong></span>
-                    </div>
-                </div>
-                <button class="guidelines-toggle" onclick="toggleGuidelines()">
-                    Guidelines
-                </button>
-            </div>
+        <div class="max-w-lg mx-auto px-4 py-3 text-center">
+            <button class="guidelines-toggle" onclick="toggleGuidelines()">
+                Guidelines
+            </button>
         </div>
     </div>
 
@@ -171,18 +161,6 @@
             <p class="text-sm text-blue-800"><strong>Important:</strong> Think about what the English phrase means, then express that in Kikuyu</p>
         </div>
 
-        <!-- Progress Indicator -->
-        <div class="flex items-center justify-center mb-6">
-            <div class="relative">
-                <svg class="progress-ring transform -rotate-90">
-                    <circle cx="30" cy="30" r="25" stroke="#e5e7eb"></circle>
-                    <circle cx="30" cy="30" r="25" stroke="#3b82f6" stroke-dashoffset="120"></circle>
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center">
-                    <span class="text-sm font-semibold text-gray-700">{{ (user.submission_count or 0) + 1 }}</span>
-                </div>
-            </div>
-        </div>
 
         <!-- English Prompt -->
         <div class="prompt-card p-4 mb-4">
