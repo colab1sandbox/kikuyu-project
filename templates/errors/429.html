@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Rate Limited - Kikuyu Translation Platform{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full text-center">
+        <div class="mb-8">
+            <div class="mx-auto h-32 w-32 bg-yellow-100 rounded-full flex items-center justify-center mb-6">
+                <span class="text-6xl">⏱️</span>
+            </div>
+            <h1 class="text-6xl font-bold text-gray-900 mb-4">429</h1>
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Too Many Requests</h2>
+            <p class="text-gray-600 mb-8">
+                Gikuyu: "Wenda na biuritù muno" - You're going too fast! Please slow down and try again in a few minutes.
+            </p>
+        </div>
+
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-yellow-800 font-medium">Rate Limit Exceeded</span>
+            </div>
+            <p class="text-yellow-700 text-sm mt-1">
+                To ensure quality and prevent abuse, we limit the number of requests per hour. Please wait before trying again.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <button onclick="setTimeout(() => location.reload(), 60000); this.disabled=true; this.innerHTML='⏳ Waiting 1 minute...'"
+                    class="btn-primary w-full">
+                ⏳ Wait and Retry
+            </button>
+            <a href="{{ url_for('main.index') }}"
+               class="btn-secondary w-full inline-block">
+                🏠 Go Home
+            </a>
+        </div>
+
+        <div class="mt-8 p-4 bg-blue-50 rounded-lg">
+            <h3 class="font-medium text-blue-900 mb-2">Rate Limits Help Us:</h3>
+            <ul class="text-sm text-blue-800 text-left space-y-1">
+                <li>• Prevent spam and abuse</li>
+                <li>• Ensure fair access for everyone</li>
+                <li>• Maintain translation quality</li>
+                <li>• Protect our servers</li>
+            </ul>
+        </div>
+
+        <div class="mt-6 text-xs text-gray-500">
+            <p>Current limits: 10 translations per hour, 10 per day</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto countdown timer
+let countdown = 60;
+const timer = setInterval(() => {
+    countdown--;
+    const button = document.querySelector('button');
+    if (button && button.disabled) {
+        button.innerHTML = `⏳ Waiting ${countdown} seconds...`;
+        if (countdown <= 0) {
+            clearInterval(timer);
+            button.disabled = false;
+            button.innerHTML = '🔄 Try Again';
+            button.onclick = () => location.reload();
+        }
+    }
+}, 1000);
+</script>
+{% endblock %}

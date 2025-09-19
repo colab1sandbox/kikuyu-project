@@ -1,0 +1,690 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Kikuyu Translation Platform{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Modern Admin Styling */
+    .admin-gradient {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .admin-gradient::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        pointer-events: none;
+    }
+
+    .admin-card {
+        background: white;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255,255,255,0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .admin-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .admin-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        padding: 20px;
+        color: white;
+        text-align: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+        transform: rotate(45deg);
+        transition: all 0.6s ease;
+        opacity: 0;
+    }
+
+    .stat-card:hover::before {
+        opacity: 1;
+        animation: shimmer 1.5s ease-in-out;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+
+    .admin-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .admin-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        color: white;
+        text-decoration: none;
+    }
+
+    .admin-btn-danger {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+    }
+
+    .admin-btn-danger:hover {
+        box-shadow: 0 8px 25px rgba(245, 87, 108, 0.6);
+    }
+
+    .admin-btn-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+    }
+
+    .admin-btn-success:hover {
+        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.6);
+    }
+
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    /* Animation keyframes */
+    @keyframes slideInUp {
+        from {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .animate-card {
+        animation: slideInUp 0.6s ease-out both;
+    }
+
+    /* Card titles */
+    .admin-card-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1a202c;
+        display: flex;
+        align-items: center;
+    }
+
+    .card-header-flex {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+
+    .view-all-link {
+        color: #667eea;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .view-all-link:hover {
+        color: #764ba2;
+        text-decoration: none;
+    }
+
+    /* Action Grid */
+    .action-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .action-item {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        border-radius: 16px;
+        text-decoration: none;
+        color: white;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1), transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .action-item:hover::before {
+        opacity: 1;
+    }
+
+    .action-item:hover {
+        transform: translateY(-3px);
+        color: white;
+        text-decoration: none;
+    }
+
+    .action-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .action-primary:hover {
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .action-success {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+    }
+
+    .action-success:hover {
+        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+    }
+
+    .action-purple {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        color: #2d3748;
+        box-shadow: 0 4px 15px rgba(168, 237, 234, 0.3);
+    }
+
+    .action-purple:hover {
+        color: #2d3748;
+        box-shadow: 0 8px 25px rgba(168, 237, 234, 0.4);
+    }
+
+    .action-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        font-size: 20px;
+    }
+
+    .action-content {
+        flex: 1;
+    }
+
+    .action-content h4 {
+        margin: 0 0 4px 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .action-content p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 0.875rem;
+    }
+
+    .action-arrow {
+        margin-left: 12px;
+        opacity: 0.7;
+        transition: all 0.3s ease;
+    }
+
+    .action-item:hover .action-arrow {
+        transform: translateX(4px);
+        opacity: 1;
+    }
+
+    /* Modern Table */
+    .modern-table-container {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    .modern-table {
+        width: 100%;
+    }
+
+    .table-header {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .header-cell {
+        padding: 16px 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4a5568;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .table-body {
+        background: white;
+    }
+
+    .table-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        border-bottom: 1px solid #f7fafc;
+        transition: all 0.2s ease;
+    }
+
+    .table-row:hover {
+        background: #f8fafc;
+    }
+
+    .table-cell {
+        padding: 20px;
+        display: flex;
+        align-items: center;
+    }
+
+    .translation-preview .kikuyu-text {
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0 0 4px 0;
+        font-size: 0.95rem;
+    }
+
+    .translation-preview .english-text {
+        color: #718096;
+        margin: 0;
+        font-size: 0.875rem;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        gap: 4px;
+    }
+
+    .status-approved {
+        background: #c6f6d5;
+        color: #22543d;
+    }
+
+    .status-rejected {
+        background: #fed7d7;
+        color: #742a2a;
+    }
+
+    .status-flagged {
+        background: #fef5e7;
+        color: #975a16;
+    }
+
+    .status-pending {
+        background: #e2e8f0;
+        color: #4a5568;
+    }
+
+    .timestamp {
+        color: #718096;
+        font-size: 0.875rem;
+    }
+
+    .review-link {
+        color: #667eea;
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+
+    .review-link:hover {
+        color: #764ba2;
+        text-decoration: none;
+    }
+
+    .no-action {
+        color: #cbd5e0;
+        font-size: 1.2rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+        color: #718096;
+    }
+
+    .empty-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 16px;
+        background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+
+    .empty-state h4 {
+        margin: 0 0 8px 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #4a5568;
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-gradient min-h-screen py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <!-- Modern Header -->
+        <div class="text-center mb-12">
+            <div class="inline-block bg-white bg-opacity-20 rounded-full px-6 py-2 mb-4">
+                <span class="text-white font-semibold">🛠️ Administrator Panel</span>
+            </div>
+            <h1 class="text-5xl font-bold text-white mb-4">Admin Dashboard</h1>
+            <p class="text-xl text-white opacity-90 max-w-2xl mx-auto">
+                Manage translations, monitor system health, and oversee the Kikuyu preservation platform
+            </p>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="flex flex-wrap justify-center gap-4 mb-12">
+            <a href="{{ url_for('admin.view_translations') }}" class="admin-btn">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                Review Translations
+            </a>
+            <a href="{{ url_for('admin.cache_status') }}" class="admin-btn admin-btn-success">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                System Status
+            </a>
+            <a href="{{ url_for('admin.export') }}?format=json" class="admin-btn admin-btn-danger">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Export Data
+            </a>
+        </div>
+
+        <!-- Modern Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            <div class="stat-card">
+                <div class="text-center">
+                    <svg class="w-12 h-12 mx-auto mb-4 opacity-80" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-lg font-semibold opacity-90">Total Translations</p>
+                    <p class="text-4xl font-bold">{{ stats.total_translations }}</p>
+                </div>
+            </div>
+
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="text-center">
+                    <svg class="w-12 h-12 mx-auto mb-4 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-lg font-semibold opacity-90">Pending Review</p>
+                    <p class="text-4xl font-bold">{{ stats.pending_translations }}</p>
+                    {% if stats.pending_translations > 0 %}
+                        <div class="pulse-animation mt-2">🔴</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="text-center">
+                    <svg class="w-12 h-12 mx-auto mb-4 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <p class="text-lg font-semibold opacity-90">Approved</p>
+                    <p class="text-4xl font-bold">{{ stats.approved_translations }}</p>
+                </div>
+            </div>
+
+            <div class="stat-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333;">
+                <div class="text-center">
+                    <svg class="w-12 h-12 mx-auto mb-4 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <p class="text-lg font-semibold opacity-90">Contributors</p>
+                    <p class="text-4xl font-bold">{{ stats.total_users }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prompt Cache Status -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Prompt Cache Status</h3>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        {% if cache_stats.cache_health == 'healthy' %}bg-green-100 text-green-800
+                        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                        {{ cache_stats.cache_health.title() }}
+                    </span>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Available Prompts</span>
+                            <span class="font-medium">{{ cache_stats.available_prompts }} / {{ cache_stats.total_prompts }}</span>
+                        </div>
+                        <div class="mt-1 w-full bg-gray-200 rounded-full h-2">
+                            {% set percentage = (cache_stats.available_prompts / cache_stats.total_prompts * 100) if cache_stats.total_prompts > 0 else 0 %}
+                            <div class="h-2 rounded-full {% if percentage > 50 %}bg-green-500{% elif percentage > 20 %}bg-yellow-500{% else %}bg-red-500{% endif %}"
+                                 style="width: {{ percentage }}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-500">Total Prompts</span>
+                            <p class="font-semibold">{{ cache_stats.total_prompts }}</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">Used Today</span>
+                            <p class="font-semibold">{{ cache_stats.used_prompts }}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-3">
+                        <form action="{{ url_for('admin.refill_cache') }}" method="POST" class="inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit"
+                                    class="btn-primary text-sm py-2 px-4 {% if cache_stats.available_prompts < 10 %}animate-pulse{% endif %}">
+                                {% if cache_stats.available_prompts < 10 %}🚨 Refill Now{% else %}🔄 Refill Cache{% endif %}
+                            </button>
+                        </form>
+                        <a href="{{ url_for('admin.cache_status') }}" class="btn-secondary text-sm py-2 px-4">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="admin-card animate-card" style="animation-delay: 0.4s">
+                <h3 class="admin-card-title mb-6">
+                    <i class="fas fa-bolt mr-2"></i>
+                    Quick Actions
+                </h3>
+                <div class="action-grid">
+                    <a href="{{ url_for('admin.view_translations') }}" class="action-item action-primary">
+                        <div class="action-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="action-content">
+                            <h4>Review Submissions</h4>
+                            <p>{{ stats.pending_translations }} pending review</p>
+                        </div>
+                        <div class="action-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </a>
+
+                    <a href="{{ url_for('admin.export') }}?status=approved" class="action-item action-success">
+                        <div class="action-icon">
+                            <i class="fas fa-download"></i>
+                        </div>
+                        <div class="action-content">
+                            <h4>Export Data</h4>
+                            <p>Download approved translations</p>
+                        </div>
+                        <div class="action-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </a>
+
+                    <a href="{{ url_for('admin.cache_status') }}" class="action-item action-purple">
+                        <div class="action-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <div class="action-content">
+                            <h4>Cache Management</h4>
+                            <p>Monitor prompt generation</p>
+                        </div>
+                        <div class="action-arrow">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="admin-card animate-card" style="animation-delay: 0.5s">
+            <div class="card-header-flex mb-6">
+                <h3 class="admin-card-title">
+                    <i class="fas fa-clock mr-2"></i>
+                    Recent Translations
+                </h3>
+                <a href="{{ url_for('admin.view_translations') }}" class="view-all-link">
+                    View all <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+
+            {% if recent_translations %}
+                <div class="modern-table-container">
+                    <div class="modern-table">
+                        <div class="table-header">
+                            <div class="header-cell">Translation</div>
+                            <div class="header-cell">Status</div>
+                            <div class="header-cell">Submitted</div>
+                            <div class="header-cell">Action</div>
+                        </div>
+                        <div class="table-body">
+                            {% for translation, prompt, user in recent_translations %}
+                                <div class="table-row">
+                                    <div class="table-cell">
+                                        <div class="translation-preview">
+                                            <p class="kikuyu-text">{{ translation.kikuyu_text[:50] }}{% if translation.kikuyu_text|length > 50 %}...{% endif %}</p>
+                                            <p class="english-text">{{ prompt.text[:60] }}{% if prompt.text|length > 60 %}...{% endif %}</p>
+                                        </div>
+                                    </div>
+                                    <div class="table-cell">
+                                        <span class="status-badge status-{{ translation.status }}">
+                                            <i class="fas fa-{{ 'check' if translation.status == 'approved' else 'times' if translation.status == 'rejected' else 'flag' if translation.status == 'flagged' else 'clock' }}"></i>
+                                            {{ translation.status.title() }}
+                                        </span>
+                                    </div>
+                                    <div class="table-cell">
+                                        <span class="timestamp">
+                                            {{ translation.timestamp.strftime('%Y-%m-%d %H:%M') if translation.timestamp else 'N/A' }}
+                                        </span>
+                                    </div>
+                                    <div class="table-cell">
+                                        {% if translation.status == 'pending' %}
+                                            <a href="{{ url_for('admin.view_translations') }}#translation-{{ translation.id }}"
+                                               class="review-link">
+                                                <i class="fas fa-eye mr-1"></i>
+                                                Review
+                                            </a>
+                                        {% else %}
+                                            <span class="no-action">—</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <h4>No translations yet</h4>
+                    <p>Translations will appear here as users submit them.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

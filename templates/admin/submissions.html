@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Review Submissions - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                        👁️ Review Submissions
+                    </h2>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Moderate and approve Kikuyu translations
+                    </p>
+                </div>
+                <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
+                    <a href="{{ url_for('main.admin_dashboard') }}" class="btn-secondary">
+                        ← Back to Dashboard
+                    </a>
+                    <a href="{{ url_for('main.admin_export') }}?status=approved&format=json" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300">
+                        📊 Download JSON
+                    </a>
+                    <a href="{{ url_for('main.admin_export') }}?status=approved&format=csv" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300">
+                        📊 Download CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="mb-6">
+            <nav class="flex space-x-8" aria-label="Tabs">
+                <a href="{{ url_for('main.admin_submissions') }}"
+                   class="{% if not status_filter %}border-kikuyu-light text-kikuyu-green{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    All Submissions
+                </a>
+                <a href="{{ url_for('main.admin_submissions') }}?status=pending"
+                   class="{% if status_filter == 'pending' %}border-yellow-500 text-yellow-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    Pending Approval
+                </a>
+                <a href="{{ url_for('main.admin_submissions') }}?status=approved"
+                   class="{% if status_filter == 'approved' %}border-green-500 text-green-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    Approved
+                </a>
+                <a href="{{ url_for('main.admin_submissions') }}?status=rejected"
+                   class="{% if status_filter == 'rejected' %}border-red-500 text-red-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    Rejected
+                </a>
+            </nav>
+        </div>
+
+        <!-- Submissions List -->
+        {% if submissions.items %}
+            <div class="space-y-6">
+                {% for translation, prompt, user in submissions.items %}
+                    <div class="card" id="translation-{{ translation.id }}">
+                        <div class="md:flex md:items-start md:space-x-6">
+                            <!-- Translation Content -->
+                            <div class="flex-1 mb-4 md:mb-0">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center space-x-3">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            {% if translation.status == 'approved' %}bg-green-100 text-green-800
+                                            {% elif translation.status == 'rejected' %}bg-red-100 text-red-800
+                                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                            {{ translation.status.title() }}
+                                        </span>
+                                        <span class="text-sm text-gray-500">
+                                            ID: {{ translation.id }}
+                                        </span>
+                                        <span class="text-sm text-gray-500">
+                                            {{ prompt.category.title() if prompt.category else 'General' }}
+                                        </span>
+                                    </div>
+                                    <span class="text-sm text-gray-500">
+                                        {{ translation.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                                    </span>
+                                </div>
+
+                                <!-- English Prompt -->
+                                <div class="mb-4">
+                                    <div class="flex items-center mb-2">
+                                        <div class="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs">
+                                            EN
+                                        </div>
+                                        <h4 class="font-medium text-gray-900">English Prompt</h4>
+                                    </div>
+                                    <p class="text-gray-700 bg-gray-50 p-3 rounded-lg border">
+                                        "{{ prompt.text }}"
+                                    </p>
+                                </div>
+
+                                <!-- Kikuyu Translation -->
+                                <div class="mb-4">
+                                    <div class="flex items-center mb-2">
+                                        <div class="bg-green-100 text-green-600 w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs">
+                                            KI
+                                        </div>
+                                        <h4 class="font-medium text-gray-900">Kikuyu Translation</h4>
+                                    </div>
+                                    <p class="text-gray-900 bg-white p-3 rounded-lg border-2 border-gray-200 font-medium">
+                                        {{ translation.kikuyu_text }}
+                                    </p>
+                                </div>
+
+                                <!-- Metadata -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-500">
+                                    <div>
+                                        <span class="font-medium">User:</span> {{ user.session_id[:8] }}...
+                                    </div>
+                                    <div>
+                                        <span class="font-medium">Submissions:</span> {{ user.submission_count }}
+                                    </div>
+                                    <div>
+                                        <span class="font-medium">IP:</span> {{ translation.ip_address or 'N/A' }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Moderation Actions -->
+                            <div class="flex-shrink-0 md:w-64">
+                                {% if translation.status == 'pending' %}
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <h5 class="font-medium text-gray-900 mb-4">Moderation Actions</h5>
+
+                                        <div class="space-y-3">
+                                            <form method="POST" action="{{ url_for('main.admin_moderate', translation_id=translation.id) }}" class="w-full">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <input type="hidden" name="action" value="approved"/>
+                                                <button type="submit"
+                                                        class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center">
+                                                    ✅ Approve Translation
+                                                </button>
+                                            </form>
+
+                                            <form method="POST" action="{{ url_for('main.admin_moderate', translation_id=translation.id) }}" class="w-full">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <input type="hidden" name="action" value="rejected"/>
+                                                <button type="submit"
+                                                        class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
+                                                        onclick="return confirm('Are you sure you want to reject this translation?')">
+                                                    ❌ Reject Translation
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="bg-gray-50 p-4 rounded-lg">
+                                        <h5 class="font-medium text-gray-900 mb-2">Already Reviewed</h5>
+                                        <p class="text-sm text-gray-600 mb-3">
+                                            This translation has been {{ translation.status }}.
+                                        </p>
+
+                                        {% if translation.admin_actions %}
+                                            <div class="text-xs text-gray-500 space-y-1">
+                                                {% for action in translation.admin_actions %}
+                                                    <div>
+                                                        <strong>{{ action.action.title() }}</strong> by {{ action.admin_id }}
+                                                        <br>{{ action.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                                                        {% if action.notes %}
+                                                            <br><em>{{ action.notes }}</em>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if submissions.pages > 1 %}
+                <div class="mt-8 flex items-center justify-between">
+                    <div class="flex-1 flex justify-between sm:hidden">
+                        {% if submissions.has_prev %}
+                            <a href="{{ url_for('main.admin_submissions', page=submissions.prev_num, status=status_filter) }}"
+                               class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Previous
+                            </a>
+                        {% endif %}
+                        {% if submissions.has_next %}
+                            <a href="{{ url_for('main.admin_submissions', page=submissions.next_num, status=status_filter) }}"
+                               class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Next
+                            </a>
+                        {% endif %}
+                    </div>
+
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                Showing
+                                <span class="font-medium">{{ submissions.per_page * (submissions.page - 1) + 1 }}</span>
+                                to
+                                <span class="font-medium">{{ submissions.per_page * (submissions.page - 1) + submissions.items|length }}</span>
+                                of
+                                <span class="font-medium">{{ submissions.total }}</span>
+                                results
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                {% if submissions.has_prev %}
+                                    <a href="{{ url_for('main.admin_submissions', page=submissions.prev_num, status=status_filter) }}"
+                                       class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        Previous
+                                    </a>
+                                {% endif %}
+
+                                {% for page_num in submissions.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != submissions.page %}
+                                            <a href="{{ url_for('main.admin_submissions', page=page_num, status=status_filter) }}"
+                                               class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                                {{ page_num }}
+                                            </a>
+                                        {% else %}
+                                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-kikuyu-light text-sm font-medium text-white">
+                                                {{ page_num }}
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                            ...
+                                        </span>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if submissions.has_next %}
+                                    <a href="{{ url_for('main.admin_submissions', page=submissions.next_num, status=status_filter) }}"
+                                       class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                        Next
+                                    </a>
+                                {% endif %}
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+        {% else %}
+            <!-- Empty State -->
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">
+                    No submissions found
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    {% if status_filter %}
+                        There are no {{ status_filter }} translations at the moment.
+                    {% else %}
+                        No translations have been submitted yet.
+                    {% endif %}
+                </p>
+                <div class="mt-6">
+                    <a href="{{ url_for('main.admin_dashboard') }}" class="btn-primary">
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Auto-scroll to a specific translation if hash is present
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.hash) {
+        const element = document.querySelector(window.location.hash);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+            element.classList.add('ring-2', 'ring-kikuyu-light');
+        }
+    }
+});
+</script>
+{% endblock %}

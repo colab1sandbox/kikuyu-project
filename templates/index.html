@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Kikuyu Translation Platform{% endblock %}
+
+{% block extra_head %}
+<style>
+    .hero-bg {
+        background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4)), url('{{ url_for("static", filename="kikuyu.jpg") }}');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <!-- Hero Section with Background -->
+    <section class="hero-bg min-h-screen flex items-center">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-5xl md:text-7xl font-bold text-white mb-8">
+                Kikuyu Language
+            </h1>
+            <p class="text-xl md:text-2xl text-white/90 mb-12">
+                Help preserve our heritage through translation
+            </p>
+
+            <a href="{{ url_for('main.translate') }}"
+               class="inline-flex items-center bg-white text-kikuyu-green font-bold py-4 px-8 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 text-lg">
+                🚀 Start Translating
+            </a>
+        </div>
+    </section>
+
+    <!-- Simple Stats -->
+    <section class="py-12 bg-white/95">
+        <div class="max-w-6xl mx-auto px-4 text-center">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div>
+                    <h3 class="text-2xl font-bold text-kikuyu-green">{{ stats.total_translations }}</h3>
+                    <p class="text-gray-600">Translations</p>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold text-kikuyu-green">{{ stats.total_users }}</h3>
+                    <p class="text-gray-600">Contributors</p>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold text-kikuyu-green">{{ stats.total_prompts }}</h3>
+                    <p class="text-gray-600">Prompts</p>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold text-kikuyu-green">{{ stats.approved_translations }}</h3>
+                    <p class="text-gray-600">Approved</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

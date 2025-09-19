@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Translate to Kikuyu{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto px-4 py-8">
+    <!-- Title -->
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">🌍 Help Preserve Kikuyu</h1>
+    <p class="text-center text-gray-600 mb-8">Translate the sentence below into Kikuyu and contribute to our language archive.</p>
+
+    <!-- Prompt Card -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6 border border-gray-200">
+        <p class="text-lg text-gray-700"><strong>English:</strong> <span class="italic">"{{ prompt.text }}"</span></p>
+    </div>
+
+    <!-- Translation Form -->
+    <form method="POST" id="translationForm" class="space-y-6">
+        {{ form.hidden_tag() }}
+        {{ form.prompt_id() }}
+
+        <!-- Textarea -->
+        <div>
+            {{ form.kikuyu_text(class="w-full p-4 border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-indigo-300 transition", placeholder="Write your Kikuyu translation here...", rows="6", maxlength="1000", id="kikuyuText") }}
+            <div class="text-sm text-gray-500 mt-1"><span id="charCounter">0 / 1000</span> characters</div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex justify-center space-x-4">
+            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition" id="submitBtn">✅ Submit</button>
+            <button type="button" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-6 rounded-lg transition" id="skipBtn">⏭️ Skip</button>
+            <a href="{{ url_for('main.translate') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition">🔄 Next</a>
+        </div>
+    </form>
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const textArea = document.getElementById('kikuyuText');
+    const charCounter = document.getElementById('charCounter');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function updateCharCounter() {
+        const length = textArea.value.length;
+        charCounter.textContent = `${length} / 1000`;
+
+        if (length > 800) {
+            charCounter.className = 'text-yellow-600';
+        }
+        if (length > 950) {
+            charCounter.className = 'text-red-600';
+        }
+        if (length <= 800) {
+            charCounter.className = 'text-gray-500';
+        }
+
+        submitBtn.disabled = length > 1000;
+        submitBtn.style.opacity = length > 1000 ? '0.5' : '1';
+        submitBtn.style.cursor = length > 1000 ? 'not-allowed' : 'pointer';
+    }
+
+    textArea.addEventListener('input', updateCharCounter);
+    textArea.addEventListener('paste', () => setTimeout(updateCharCounter, 10));
+    updateCharCounter();
+
+    document.getElementById('translationForm').addEventListener('submit', function(e) {
+        const text = textArea.value.trim();
+        if (text.length < 2) {
+            e.preventDefault();
+            alert('Please provide a translation with at least 2 characters.');
+            textArea.focus();
+            return false;
+        }
+        if (text.length > 1000) {
+            e.preventDefault();
+            alert('Translation is too long. Please keep it under 1000 characters.');
+            textArea.focus();
+            return false;
+        }
+
+        submitBtn.innerHTML = '⏳ Submitting...';
+        submitBtn.disabled = true;
+    });
+
+    textArea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+    });
+
+    const skipBtn = document.getElementById('skipBtn');
+    if (skipBtn) {
+        skipBtn.addEventListener('click', function() {
+            skipBtn.innerHTML = '⏳ Skipping...';
+            skipBtn.disabled = true;
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url_for("main.skip_prompt", prompt_id=prompt.id) }}';
+
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrf_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+
+            document.body.appendChild(form);
+            form.submit();
+        });
+    }
+});
+</script>
+{% endblock %}

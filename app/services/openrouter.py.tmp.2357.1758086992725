@@ -1,0 +1,272 @@
+import requests
+import json
+import logging
+from datetime import datetime, date
+from flask import current_app
+from typing import Optional, Dict, Any
+
+class OpenRouterClient:
+    """Client for interacting with OpenRouter API"""
+
+    def __init__(self):
+        self.api_key = current_app.config.get('OPENROUTER_API_KEY')
+        self.model = current_app.config.get('OPENROUTER_MODEL', 'mistralai/mistral-7b-instruct')
+        self.base_url = "https://openrouter.ai/api/v1/chat/completions"
+        self.daily_limit = current_app.config.get('OPENROUTER_DAILY_LIMIT', 50)
+
+    def _check_api_key(self) -> bool:
+        """Check if API key is configured"""
+        if not self.api_key:
+            logging.warning("OpenRouter API key not configured")
+            return False
+        return True
+
+    def _build_headers(self) -> Dict[str, str]:
+        """Build headers for API requests"""
+        return {
+            "Authorization": f"Bearer {self.api_key}",
+            "HTTP-Referer": "https://kikuyu-translation.app",
+            "X-Title": "Kikuyu Translation Platform",
+            "Content-Type": "application/json"
+        }
+
+    def _create_prompt_seed(self, category: Optional[str] = None, complexity: str = "varied") -> str:
+        """Create a comprehensive seed prompt for generating diverse English sentences for LLM training"""
+
+        # Comprehensive categories for robust LLM training dataset
+        category_templates = {
+            # Basic Communication & Social
+            'conversation': "Generate natural dialogue, questions, requests, or social interactions",
+            'greetings': "Generate greetings, farewells, introductions, and polite expressions",
+            'emotions': "Generate expressions of feelings, emotions, reactions, and sentiments",
+
+            # Knowledge & Education
+            'academic': "Generate educational content, explanations, scientific facts, or academic discussions",
+            'history': "Generate historical facts, cultural knowledge, or traditional stories",
+            'literature': "Generate literary expressions, poetry, proverbs, or creative writing",
+
+            # Professional & Technical
+            'business': "Generate professional communication, work scenarios, or business concepts",
+            'technology': "Generate tech-related content, digital concepts, or modern innovations",
+            'medical': "Generate health information, medical scenarios, or wellness advice",
+
+            # Daily Life & Practical
+            'household': "Generate domestic activities, family life, or home management",
+            'food': "Generate cooking, nutrition, meals, or culinary traditions",
+            'shopping': "Generate market scenarios, buying/selling, or economic activities",
+            'transportation': "Generate travel, movement, vehicles, or journey descriptions",
+
+            # Nature & Environment
+            'agriculture': "Generate farming, crops, livestock, or rural life scenarios",
+            'weather': "Generate weather patterns, climate, seasons, or natural phenomena",
+            'animals': "Generate wildlife, pets, animal behavior, or ecological concepts",
+            'environment': "Generate environmental issues, conservation, or nature descriptions",
+
+            # Culture & Society
+            'traditions': "Generate cultural practices, ceremonies, or social customs",
+            'religion': "Generate spiritual concepts, religious practices, or moral teachings",
+            'community': "Generate social structures, community events, or collective activities",
+            'government': "Generate civic concepts, laws, politics, or administrative matters",
+
+            # Arts & Entertainment
+            'music': "Generate musical concepts, performances, or artistic expressions",
+            'sports': "Generate athletic activities, games, competitions, or physical activities",
+            'entertainment': "Generate leisure activities, celebrations, or recreational pursuits",
+
+            # Abstract & Complex
+            'philosophy': "Generate abstract concepts, ethical discussions, or philosophical ideas",
+            'psychology': "Generate mental processes, behavior analysis, or psychological concepts",
+            'economics': "Generate financial concepts, trade, or economic relationships",
+            'relationships': "Generate interpersonal dynamics, social bonds, or human connections",
+
+            # Temporal & Descriptive
+            'time': "Generate temporal concepts, schedules, chronology, or time-based scenarios",
+            'descriptions': "Generate detailed descriptions of places, people, objects, or situations",
+            'comparisons': "Generate comparative statements, contrasts, or analytical observations",
+            'instructions': "Generate step-by-step guides, procedures, or how-to explanations"
+        }
+
+        # Complexity levels for varied sentence structures
+        complexity_instructions = {
+            "simple": "Use simple sentences with basic vocabulary (5-15 words). Focus on subject-verb-object structure.",
+            "intermediate": "Use compound sentences with connecting words (10-25 words). Include descriptive elements.",
+            "complex": "Use complex sentences with multiple clauses, subordination, and advanced vocabulary (15-40 words).",
+            "varied": "Mix simple, compound, and complex sentence structures for natural variety (5-40 words)."
+        }
+
+        selected_category = category or 'general'
+        category_instruction = category_templates.get(selected_category,
+            "Generate content about everyday life, universal experiences, or common human activities")
+
+        complexity_instruction = complexity_instructions.get(complexity, complexity_instructions["varied"])
+
+        # Enhanced prompt for comprehensive dataset generation
+        base_prompt = f"""Generate diverse English content for comprehensive language model training.
+
+Category Focus: {category_instruction}
+
+Sentence Complexity: {complexity_instruction}
+
+Content Requirements:
+- Culturally appropriate and universally relatable
+- Grammatically correct and natural-sounding
+- Suitable for translation into any language
+- Include various linguistic patterns: statements, questions, commands, conditionals
+- Represent diverse perspectives, ages, and social contexts
+- Avoid offensive, harmful, or culturally insensitive content
+
+Generate ONE complete, standalone piece of English text. Return only the English content, no explanations or quotation marks."""
+
+        return base_prompt
+
+    def generate_prompt(self, category: Optional[str] = None) -> Optional[str]:
+        """
+        Generate a single English prompt using OpenRouter API
+
+        Args:
+            category: Optional category for the prompt (greetings, family, etc.)
+
+        Returns:
+            Generated English sentence or None if failed
+        """
+        if not self._check_api_key():
+            return None
+
+        try:
+            seed_text = self._create_prompt_seed(category)
+            headers = self._build_headers()
+
+            data = {
+                "model": self.model,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": seed_text
+                    }
+                ],
+                "temperature": 0.8,
+                "max_tokens": 50,
+                "top_p": 0.9
+            }
+
+            response = requests.post(
+                self.base_url,
+                headers=headers,
+                json=data,
+                timeout=30
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+
+                if 'choices' in result and len(result['choices']) > 0:
+                    generated_text = result['choices'][0]['message']['content'].strip()
+
+                    # Clean up the generated text
+                    generated_text = generated_text.strip('"\'')
+
+                    # Basic validation
+                    if len(generated_text) > 5 and len(generated_text.split()) <= 25:
+                        logging.info(f"Generated prompt: {generated_text}")
+                        return generated_text
+                    else:
+                        logging.warning(f"Generated text doesn't meet criteria: {generated_text}")
+                        return None
+                else:
+                    logging.error("No choices in OpenRouter response")
+                    return None
+            else:
+                logging.error(f"OpenRouter API error: {response.status_code} - {response.text}")
+                return None
+
+        except requests.exceptions.RequestException as e:
+            logging.error(f"Request error when calling OpenRouter: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error in generate_prompt: {e}")
+            return None
+
+    def generate_multiple_prompts(self, count: int = 20, categories: Optional[list] = None) -> list:
+        """
+        Generate multiple prompts in batch
+
+        Args:
+            count: Number of prompts to generate
+            categories: List of categories to use (will cycle through them)
+
+        Returns:
+            List of generated prompts with metadata
+        """
+        if not self._check_api_key():
+            return []
+
+        prompts = []
+        default_categories = ['greetings', 'family', 'farming', 'health', 'school', 'weather', 'general']
+
+        if not categories:
+            categories = default_categories
+
+        for i in range(count):
+            # Cycle through categories
+            category = categories[i % len(categories)]
+
+            try:
+                text = self.generate_prompt(category)
+
+                if text:
+                    prompt_data = {
+                        'id': f"prompt_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{i+1}",
+                        'text': text,
+                        'category': category,
+                        'date_generated': datetime.utcnow().isoformat(),
+                        'usage_count': 0,
+                        'status': 'active'
+                    }
+                    prompts.append(prompt_data)
+
+                    # Add small delay between requests to respect rate limits
+                    import time
+                    time.sleep(0.5)
+                else:
+                    logging.warning(f"Failed to generate prompt {i+1}")
+
+            except Exception as e:
+                logging.error(f"Error generating prompt {i+1}: {e}")
+                continue
+
+        logging.info(f"Successfully generated {len(prompts)} out of {count} requested prompts")
+        return prompts
+
+    def test_connection(self) -> Dict[str, Any]:
+        """
+        Test the OpenRouter API connection
+
+        Returns:
+            Dictionary with test results
+        """
+        if not self._check_api_key():
+            return {
+                'success': False,
+                'error': 'API key not configured'
+            }
+
+        try:
+            test_prompt = self.generate_prompt('general')
+
+            if test_prompt:
+                return {
+                    'success': True,
+                    'message': 'OpenRouter API connection successful',
+                    'sample_prompt': test_prompt
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': 'Failed to generate test prompt'
+                }
+
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Connection test failed: {str(e)}'
+            }

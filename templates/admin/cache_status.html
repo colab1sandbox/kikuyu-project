@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}Cache Status - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="flex-1 min-w-0">
+                    <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                        ⚙️ Prompt Cache Status
+                    </h2>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Monitor and manage the prompt generation system
+                    </p>
+                </div>
+                <div class="mt-4 flex md:mt-0 md:ml-4">
+                    <a href="{{ url_for('admin.dashboard') }}" class="btn-secondary mr-3">
+                        ← Back to Dashboard
+                    </a>
+                    <form action="{{ url_for('admin.refill_cache') }}" method="POST" class="inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn-primary">
+                            🔄 Refill Cache
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cache Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="card">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Total Prompts</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ cache_stats.total_prompts }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Available</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ cache_stats.available_prompts }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Used</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ cache_stats.used_prompts }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 {% if cache_stats.cache_health == 'healthy' %}bg-green-100{% else %}bg-red-100{% endif %} rounded-lg flex items-center justify-center">
+                            {% if cache_stats.cache_health == 'healthy' %}
+                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            {% else %}
+                                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+                                </svg>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Cache Health</p>
+                        <p class="text-lg font-semibold {% if cache_stats.cache_health == 'healthy' %}text-green-600{% else %}text-red-600{% endif %}">
+                            {{ cache_stats.cache_health.title() }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cache Details -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Cache Usage Chart -->
+            <div class="card">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Cache Usage</h3>
+
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-600">Available Prompts</span>
+                            <span class="font-medium">{{ cache_stats.available_prompts }} / {{ cache_stats.total_prompts }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-4">
+                            {% set percentage = (cache_stats.available_prompts / cache_stats.total_prompts * 100) if cache_stats.total_prompts > 0 else 0 %}
+                            <div class="h-4 rounded-full {% if percentage > 50 %}bg-green-500{% elif percentage > 20 %}bg-yellow-500{% else %}bg-red-500{% endif %} transition-all duration-300"
+                                 style="width: {{ percentage }}%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">
+                            {% if percentage > 50 %}
+                                Cache is healthy
+                            {% elif percentage > 20 %}
+                                Cache is running low
+                            {% else %}
+                                ⚠️ Cache critically low - refill needed
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    {% if cache_stats.available_prompts < 10 %}
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span class="text-red-800 font-medium">Critical: Low prompt cache!</span>
+                            </div>
+                            <p class="text-red-700 text-sm mt-1">Cache will be automatically refilled when users request prompts, but manual refill is recommended.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- API Status -->
+            <div class="card">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">OpenRouter API Status</h3>
+
+                {% if connection_test.success %}
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-green-800 font-medium">API Connection: Active</span>
+                        </div>
+                        <p class="text-green-700 text-sm mt-1">{{ connection_test.message }}</p>
+                        {% if connection_test.sample_prompt %}
+                            <div class="mt-3 p-3 bg-white rounded border">
+                                <p class="text-xs text-gray-500 mb-1">Sample generated prompt:</p>
+                                <p class="text-sm text-gray-900">"{{ connection_test.sample_prompt }}"</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="text-red-800 font-medium">API Connection: Failed</span>
+                        </div>
+                        <p class="text-red-700 text-sm mt-1">{{ connection_test.error }}</p>
+                    </div>
+                {% endif %}
+
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">API Calls Today</span>
+                        <span class="font-medium">{{ cache_stats.api_calls_today or 0 }} / 50</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        {% set api_percentage = ((cache_stats.api_calls_today or 0) / 50 * 100) %}
+                        <div class="h-2 rounded-full {% if api_percentage > 80 %}bg-red-500{% elif api_percentage > 60 %}bg-yellow-500{% else %}bg-green-500{% endif %}"
+                             style="width: {{ api_percentage }}%"></div>
+                    </div>
+                    <p class="text-xs text-gray-500">
+                        {{ 50 - (cache_stats.api_calls_today or 0) }} API calls remaining today
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cache Metadata -->
+        <div class="card">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Cache Information</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-3">Timestamps</h4>
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Last Updated:</dt>
+                            <dd class="text-gray-900">
+                                {% if cache_stats.last_updated %}
+                                    {{ cache_stats.last_updated[:16] }}
+                                {% else %}
+                                    Never
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Last Refill:</dt>
+                            <dd class="text-gray-900">
+                                {% if cache_stats.last_refill %}
+                                    {{ cache_stats.last_refill[:16] }}
+                                {% else %}
+                                    Never
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">API Calls Date:</dt>
+                            <dd class="text-gray-900">{{ cache_stats.api_calls_date or 'N/A' }}</dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-3">Cache Efficiency</h4>
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Usage Rate:</dt>
+                            <dd class="text-gray-900">
+                                {% set usage_rate = (cache_stats.used_prompts / cache_stats.total_prompts * 100) if cache_stats.total_prompts > 0 else 0 %}
+                                {{ "%.1f"|format(usage_rate) }}%
+                            </dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Remaining Days:</dt>
+                            <dd class="text-gray-900">
+                                {% if cache_stats.available_prompts > 0 %}
+                                    ~{{ (cache_stats.available_prompts / 10)|round }} days
+                                {% else %}
+                                    0 days
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Refill Status:</dt>
+                            <dd class="text-gray-900">
+                                {% if cache_stats.available_prompts >= 20 %}
+                                    ✅ Good
+                                {% elif cache_stats.available_prompts >= 10 %}
+                                    ⚠️ Low
+                                {% else %}
+                                    🚨 Critical
+                                {% endif %}
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-3">Recommendations</h4>
+                    <div class="space-y-2 text-sm">
+                        {% if cache_stats.available_prompts < 5 %}
+                            <div class="flex items-start">
+                                <span class="text-red-500 mr-2">🚨</span>
+                                <span class="text-gray-700">Immediate refill required</span>
+                            </div>
+                        {% elif cache_stats.available_prompts < 10 %}
+                            <div class="flex items-start">
+                                <span class="text-yellow-500 mr-2">⚠️</span>
+                                <span class="text-gray-700">Schedule refill soon</span>
+                            </div>
+                        {% else %}
+                            <div class="flex items-start">
+                                <span class="text-green-500 mr-2">✅</span>
+                                <span class="text-gray-700">Cache levels are healthy</span>
+                            </div>
+                        {% endif %}
+
+                        {% if (cache_stats.api_calls_today or 0) > 40 %}
+                            <div class="flex items-start">
+                                <span class="text-yellow-500 mr-2">⚠️</span>
+                                <span class="text-gray-700">Approaching daily API limit</span>
+                            </div>
+                        {% endif %}
+
+                        {% if not connection_test.success %}
+                            <div class="flex items-start">
+                                <span class="text-red-500 mr-2">🚨</span>
+                                <span class="text-gray-700">Check API configuration</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh every 30 seconds
+setTimeout(function() {
+    location.reload();
+}, 30000);
+
+// Show success message if cache was just refilled
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        // Messages are already handled by the base template
+    {% endif %}
+{% endwith %}
+</script>
+{% endblock %}

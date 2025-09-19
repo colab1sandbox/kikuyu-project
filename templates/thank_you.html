@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Thank You - Kikuyu Translation Platform{% endblock %}
+
+{% block extra_head %}
+<style>
+    .celebration-animation {
+        animation: celebration 0.6s ease-out;
+    }
+
+    @keyframes celebration {
+        0% { transform: scale(0.8) rotate(-10deg); opacity: 0; }
+        50% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+        100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .success-card {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .bounce {
+        animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Success Message -->
+        <div class="success-card text-white rounded-2xl shadow-2xl p-8 md:p-12 mb-8 celebration-animation">
+            <div class="text-center">
+                <div class="mb-6">
+                    <div class="inline-block p-4 bg-white/20 rounded-full bounce">
+                        <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <h1 class="text-3xl md:text-5xl font-bold mb-4">
+                    🎉 Asante Sana!
+                </h1>
+                <h2 class="text-xl md:text-2xl mb-6 opacity-90">
+                    Thank You for Your Contribution!
+                </h2>
+                <p class="text-lg md:text-xl opacity-80 max-w-2xl mx-auto mb-6">
+                    Your Kikuyu translation has been successfully submitted and will be reviewed by our community moderators.
+                    You're helping preserve the Kikuyu language for future generations!
+                </p>
+
+                <div class="mt-6">
+                    <a href="{{ url_for('main.translate') }}"
+                       class="inline-flex items-center bg-white text-kikuyu-green font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        🚀 Get Next Prompt (Unlimited submissions!)
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <!-- Today's Progress -->
+            <div class="card">
+                <div class="flex items-center mb-4">
+                    <div class="bg-kikuyu-light text-white w-12 h-12 rounded-lg flex items-center justify-center mr-4">
+                        📊
+                    </div>
+                    <h3 class="text-lg font-semibold text-kikuyu-green">Today's Progress</h3>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-600">Translations Submitted Today</span>
+                            <span class="font-semibold text-kikuyu-green">{{ user.submission_count }}</span>
+                        </div>
+                        <div class="text-sm text-gray-500 text-center py-2">
+                            No daily limits - keep contributing!
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Impact Stats -->
+            <div class="card">
+                <div class="flex items-center mb-4">
+                    <div class="bg-kikuyu-light text-white w-12 h-12 rounded-lg flex items-center justify-center mr-4">
+                        🌍
+                    </div>
+                    <h3 class="text-lg font-semibold text-kikuyu-green">Your Impact</h3>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Total Contributions</span>
+                        <span class="font-semibold text-kikuyu-green">{{ user.submission_count }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Member Since</span>
+                        <span class="font-semibold text-gray-700">{{ user.created_at.strftime('%B %Y') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Community Rank</span>
+                        <span class="font-semibold text-kikuyu-green">
+                            {% if user.submission_count >= 50 %}Expert{% elif user.submission_count >= 20 %}Advanced{% elif user.submission_count >= 5 %}Contributor{% else %}Beginner{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                {% if user.submission_count >= 5 and user.submission_count < 20 %}
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <p class="text-blue-800 text-sm">
+                            🏆 You're on your way to becoming an Advanced contributor! {{ 20 - user.submission_count }} more translations to go.
+                        </p>
+                    </div>
+                {% elif user.submission_count >= 20 and user.submission_count < 50 %}
+                    <div class="mt-4 p-3 bg-purple-50 rounded-lg">
+                        <p class="text-purple-800 text-sm">
+                            🌟 Almost an Expert! Just {{ 50 - user.submission_count }} more translations needed.
+                        </p>
+                    </div>
+                {% elif user.submission_count >= 50 %}
+                    <div class="mt-4 p-3 bg-gold-50 rounded-lg border border-yellow-200">
+                        <p class="text-yellow-800 text-sm font-medium">
+                            👑 Congratulations! You're an Expert contributor to the Kikuyu language preservation effort!
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Next Actions -->
+        <div class="card">
+            <h3 class="text-xl font-semibold text-kikuyu-green mb-6 text-center">
+                What would you like to do next?
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <div class="bg-kikuyu-light text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-2">Continue Translating</h4>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Keep contributing! No daily limits - translate as much as you like.
+                    </p>
+                    <a href="{{ url_for('main.translate') }}" class="btn-primary">
+                        🚀 Get Next Prompt
+                    </a>
+                </div>
+
+                <div class="text-center">
+                    <div class="bg-blue-500 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+                        </svg>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-2">Share with Friends</h4>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Invite other Kikuyu speakers to join the preservation effort.
+                    </p>
+                    <button onclick="shareProject()" class="btn-secondary">
+                        Share Project
+                    </button>
+                </div>
+
+                <div class="text-center">
+                    <div class="bg-green-500 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 mb-2">Back to Home</h4>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Learn more about the project and see community statistics.
+                    </p>
+                    <a href="{{ url_for('main.index') }}" class="btn-secondary">
+                        Go Home
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Motivational Message -->
+        <div class="mt-8 text-center">
+            <div class="card bg-gradient-to-r from-kikuyu-green to-kikuyu-light text-white">
+                <h3 class="text-xl font-semibold mb-3">
+                    "Language is the roadmap of a culture. It tells you where its people come from and where they are going."
+                </h3>
+                <p class="opacity-90">
+                    — Rita Mae Brown
+                </p>
+                <p class="mt-4 text-sm opacity-80">
+                    Every translation you provide helps preserve the rich cultural heritage of the Kikuyu people.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function shareProject() {
+    if (navigator.share) {
+        navigator.share({
+            title: 'Kikuyu Translation Platform',
+            text: 'Help preserve the Kikuyu language! Join me in contributing translations to build a valuable linguistic dataset.',
+            url: window.location.origin
+        }).catch(console.error);
+    } else {
+        // Fallback for browsers that don't support Web Share API
+        const url = window.location.origin;
+        const text = `Help preserve the Kikuyu language! Join me in contributing translations: ${url}`;
+
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Project link copied to clipboard! Share it with friends and family.');
+            });
+        } else {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Project link copied to clipboard! Share it with friends and family.');
+        }
+    }
+}
+
+// Add confetti effect on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Simple confetti effect using CSS animations
+    setTimeout(() => {
+        for (let i = 0; i < 50; i++) {
+            createConfetti();
+        }
+    }, 500);
+});
+
+function createConfetti() {
+    const confetti = document.createElement('div');
+    confetti.style.position = 'fixed';
+    confetti.style.top = '-10px';
+    confetti.style.left = Math.random() * 100 + 'vw';
+    confetti.style.width = '10px';
+    confetti.style.height = '10px';
+    confetti.style.backgroundColor = ['#2d5016', '#7fb069', '#d4a574'][Math.floor(Math.random() * 3)];
+    confetti.style.pointerEvents = 'none';
+    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    confetti.style.zIndex = '9999';
+
+    document.body.appendChild(confetti);
+
+    const animation = confetti.animate([
+        { transform: `translateY(0) rotate(0deg)`, opacity: 1 },
+        { transform: `translateY(100vh) rotate(720deg)`, opacity: 0 }
+    ], {
+        duration: Math.random() * 2000 + 3000,
+        easing: 'ease-out'
+    });
+
+    animation.onfinish = () => {
+        confetti.remove();
+    };
+}
+</script>
+{% endblock %}
