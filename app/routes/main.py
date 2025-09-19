@@ -194,11 +194,9 @@ def submit_prompt():
 
     if request.method == 'POST' and form.validate_on_submit():
         try:
-            # Get submitter info
-            submitter_info = {
-                'ip_address': request.remote_addr,
-                'user_agent': request.headers.get('User-Agent', '')
-            }
+            # Get submitter info (using utils function for proper truncation)
+            from app.utils import get_client_info
+            submitter_info = get_client_info()
 
             # Submit via community service
             community_service = CommunitySubmissionService()

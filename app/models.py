@@ -144,7 +144,7 @@ class CommunitySubmission(db.Model):
     # Submission metadata
     submitted_by = db.Column(db.String(255), nullable=True)  # Optional submitter ID
     submission_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    submission_ip = db.Column(db.String(45), nullable=True)
+    submission_ip = db.Column(db.String(200), nullable=True)  # For tracking and moderation (supports proxy chains)
 
     # Review status
     status = db.Column(db.String(20), default='pending')  # pending, approved, rejected
