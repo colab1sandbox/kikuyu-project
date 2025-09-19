@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  kikuyu-app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - DEBUG=false
+      - SECRET_KEY=docker-secret-key-123
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-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}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+    volumes:
+      - ./instance:/app/instance
+      - ./logs:/app/logs
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
