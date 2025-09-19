@@ -4,7 +4,7 @@ from datetime import timedelta
 class Config:
     """Base configuration class for Hybrid Kikuyu Translation Platform"""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f'sqlite:///{os.path.abspath("kikuyu.db")}'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f'sqlite:///{os.path.abspath("instance/kikuyu.db")}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # OpenRouter Configuration

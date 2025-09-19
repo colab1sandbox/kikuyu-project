@@ -9,6 +9,7 @@ services:
       - FLASK_ENV=production
       - DEBUG=false
       - SECRET_KEY=docker-secret-key-123
+      - DATABASE_URL=sqlite:///instance/kikuyu.db
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-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}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
     volumes:
