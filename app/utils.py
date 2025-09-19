@@ -52,8 +52,8 @@ def admin_required(f):
 def get_client_info() -> dict:
     """Get client IP and user agent for logging"""
     return {
-        'ip_address': request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr),
-        'user_agent': request.environ.get('HTTP_USER_AGENT', '')[:255]
+        'ip_address': (request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr) or '')[:45],
+        'user_agent': (request.environ.get('HTTP_USER_AGENT', '') or '')[:255]
     }
 
 def hash_text(text: str) -> str:
