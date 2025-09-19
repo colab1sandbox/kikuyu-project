@@ -58,6 +58,11 @@ def index():
 
 @main_bp.route('/translate', methods=['GET', 'POST'])
 def translate():
+    """Main translation interface with modern mobile-first design"""
+    return translate_v2()
+
+@main_bp.route('/translate-v2', methods=['GET', 'POST'])
+def translate_v2():
     """Main translation interface with smart prompt selection"""
     user = get_or_create_user()
 
@@ -104,12 +109,17 @@ def translate():
                 'source_type': prompt.source_type
             }
 
+            # Get basic stats for the interface
+            from app.utils import get_translation_stats
+            stats = get_translation_stats()
+
             return render_template(
-                'translate.html',
+                'translate_new.html',
                 form=form,
                 prompt=prompt,
                 user=user,
-                context=context
+                context=context,
+                stats=stats
             )
 
         except Exception as e:
@@ -126,36 +136,51 @@ def translate():
                 # Validate text
                 is_valid, error_msg = validate_kikuyu_text(kikuyu_text)
                 if not is_valid:
-                    flash(error_msg, 'error')
                     prompt = Prompt.query.get(prompt_id)
-                    return render_template('translate.html', form=form, prompt=prompt, user=user)
+                    from app.utils import get_translation_stats
+                    stats = get_translation_stats()
+                    return render_template('translate_new.html', form=form, prompt=prompt, user=user, stats=stats, error='validation')
 
                 # Check for duplicates
                 if check_duplicate_translation(kikuyu_text, prompt_id):
-                    flash('This translation has already been submitted for this prompt.', 'error')
+                    # Handle duplicate in frontend with better UX
                     prompt = Prompt.query.get(prompt_id)
-                    return render_template('translate.html', form=form, prompt=prompt, user=user)
+                    from app.utils import get_translation_stats
+                    stats = get_translation_stats()
+                    return render_template('translate_new.html', form=form, prompt=prompt, user=user, stats=stats, error='duplicate')
 
                 # Save translation
                 translation = save_translation(prompt_id, kikuyu_text, user)
-                flash('Thank you! Your translation has been submitted for review.', 'success')
 
                 # Log the submission
                 logging.info(f"Translation submitted: ID {translation.id}, User {user.session_id}")
 
-                return redirect(url_for('main.thank_you'))
+                # Redirect to success page with smooth UX
+                return redirect(url_for('main.translate_success', translation_id=translation.id))
 
             except Exception as e:
                 logging.error(f"Error saving translation: {e}")
-                flash('An error occurred while saving your translation. Please try again.', 'error')
                 prompt = Prompt.query.get(prompt_id)
-                return render_template('translate.html', form=form, prompt=prompt, user=user)
+                from app.utils import get_translation_stats
+                stats = get_translation_stats()
+                return render_template('translate_new.html', form=form, prompt=prompt, user=user, stats=stats, error='server')
 
         else:
             # Form validation failed
             prompt_id = form.prompt_id.data
             prompt = Prompt.query.get(prompt_id) if prompt_id else None
-            return render_template('translate.html', form=form, prompt=prompt, user=user)
+            from app.utils import get_translation_stats
+            stats = get_translation_stats()
+            return render_template('translate_new.html', form=form, prompt=prompt, user=user, stats=stats, error='form')
+
+
+@main_bp.route('/translate-success/<int:translation_id>')
+def translate_success(translation_id):
+    """Success page after translation submission with immediate next action"""
+    user = get_or_create_user()
+
+    # Quick redirect to next translation for seamless flow
+    return redirect(url_for('main.translate'))
 
 
 @main_bp.route('/thank-you')
