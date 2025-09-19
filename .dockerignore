@@ -1,0 +1,50 @@
+# Git
+.git
+.gitignore
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Development files
+.env
+.env.example
+.env.production
+
+# Documentation
+README*.md
+*.md
+.claude/
+
+# Logs
+logs/
+*.log
+
+# Database backups
+*.backup
+*backup*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+test_*.py
+*_test.py
+
+# Temporary files
+*.tmp
+*.temp
