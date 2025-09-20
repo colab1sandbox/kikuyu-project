@@ -4,7 +4,7 @@ from datetime import timedelta
 class Config:
     """Base configuration class for Hybrid Kikuyu Translation Platform"""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'postgresql://neondb_owner:npg_IqfGwQAXN3l1@ep-empty-leaf-a1u0aj23-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///kikuyu.db'  # Fallback to local SQLite for development
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # PostgreSQL Performance Optimizations (Free Tier Optimized)

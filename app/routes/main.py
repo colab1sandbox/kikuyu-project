@@ -20,8 +20,7 @@ from app.utils import (
     get_translation_stats
 )
 from app.services.csv_prompt_manager import CSVPromptManager
-from app.services.community_service import CommunitySubmissionService
-# Note: AnalyticsService removed to avoid complex model dependencies
+# Note: Removed unused service imports to avoid complex model dependencies
 
 
 # Create main blueprint
