@@ -17,7 +17,9 @@ class Config:
         'echo': False,  # Disable SQL logging in production
         'connect_args': {
             'connect_timeout': 10,  # Connection timeout
-            'application_name': 'kikuyu_app'
+            'application_name': 'kikuyu_app',
+            'client_encoding': 'UTF8',  # Ensure UTF-8 encoding for Kikuyu characters
+            'options': '-c timezone=UTC'  # Set timezone
         }
     }
 

@@ -34,6 +34,10 @@ def create_app(config_name=None):
     if hasattr(Config, 'init_app'):
         Config.init_app(app)
 
+    # Configure Unicode handling for Kikuyu special characters
+    app.config['JSON_AS_ASCII'] = False  # Allow Unicode in JSON responses
+    app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False  # Reduce response size
+
     # Initialize extensions with app
     db.init_app(app)
     csrf.init_app(app)

@@ -1,5 +1,7 @@
 import uuid
 import hashlib
+import unicodedata
+import re
 from datetime import datetime, timedelta
 from flask import session, request
 from functools import wraps
@@ -65,22 +67,67 @@ def get_client_info() -> dict:
         'user_agent': (request.environ.get('HTTP_USER_AGENT', '') or '')[:255]
     }
 
+def normalize_kikuyu_text(text: str) -> str:
+    """Robust Unicode normalization for Kikuyu text with special characters"""
+    if not text:
+        return ""
+
+    try:
+        # Strip whitespace
+        text = text.strip()
+
+        # Unicode normalize to handle composed/decomposed characters consistently
+        # NFD = decomposed form, then recompose with NFC
+        text = unicodedata.normalize('NFC', unicodedata.normalize('NFD', text))
+
+        # Convert to lowercase (handles Unicode properly)
+        text = text.lower()
+
+        # Remove extra whitespace between words
+        text = re.sub(r'\s+', ' ', text)
+
+        return text
+    except Exception:
+        # Fallback to basic normalization if Unicode processing fails
+        return text.strip().lower()
+
 def hash_text(text: str) -> str:
-    """Create a hash of text for duplicate detection"""
-    return hashlib.sha256(text.lower().strip().encode('utf-8')).hexdigest()
+    """Create a hash of text for duplicate detection - Unicode safe"""
+    try:
+        normalized = normalize_kikuyu_text(text)
+        return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
+    except Exception:
+        # Fallback hash if Unicode fails
+        return hashlib.sha256(text.encode('utf-8', errors='ignore')).hexdigest()
 
 def check_duplicate_translation(kikuyu_text: str, prompt_id: int) -> bool:
-    """Check if a translation already exists - optimized for speed"""
-    # Normalize text once
-    normalized_text = kikuyu_text.lower().strip()
+    """Check if a translation already exists - Unicode safe and optimized"""
+    try:
+        # Robust Unicode normalization
+        normalized_text = normalize_kikuyu_text(kikuyu_text)
 
-    # Fast query using only indexed columns
-    existing = Translation.query.filter(
-        Translation.prompt_id == prompt_id,
-        db.func.lower(Translation.kikuyu_text) == normalized_text
-    ).first()
+        if not normalized_text:
+            return False
 
-    return existing is not None
+        # Fast query using only indexed columns with Unicode-safe comparison
+        existing = Translation.query.filter(
+            Translation.prompt_id == prompt_id,
+            db.func.lower(db.func.trim(Translation.kikuyu_text)) == normalized_text
+        ).first()
+
+        return existing is not None
+    except Exception:
+        # Fallback to basic check if Unicode processing fails
+        try:
+            basic_normalized = kikuyu_text.strip().lower()
+            existing = Translation.query.filter(
+                Translation.prompt_id == prompt_id,
+                db.func.lower(Translation.kikuyu_text) == basic_normalized
+            ).first()
+            return existing is not None
+        except Exception:
+            # Last resort - assume not duplicate if we can't check
+            return False
 
 def save_translation(prompt_id: int, kikuyu_text: str, user: User) -> Translation:
     """Save a new translation to the database - optimized for speed"""
@@ -228,7 +275,7 @@ def export_translations_data(status_filter: str = None) -> list:
 
 def validate_kikuyu_text(text: str) -> tuple[bool, str]:
     """
-    Validate Kikuyu text input
+    Validate Kikuyu text input - Unicode safe for special characters
 
     Args:
         text: The text to validate
@@ -236,40 +283,56 @@ def validate_kikuyu_text(text: str) -> tuple[bool, str]:
     Returns:
         Tuple of (is_valid: bool, error_message: str)
     """
-    if not text or not text.strip():
-        return False, "Translation cannot be empty"
+    try:
+        if not text or not text.strip():
+            return False, "Translation cannot be empty"
 
-    text = text.strip()
+        # Use Unicode-safe normalization
+        normalized_text = normalize_kikuyu_text(text)
 
-    if len(text) < 2:
-        return False, "Translation is too short"
+        if not normalized_text:
+            return False, "Translation cannot be empty"
 
-    if len(text) > 1000:
-        return False, "Translation is too long (maximum 1000 characters)"
+        if len(normalized_text) < 2:
+            return False, "Translation is too short"
 
-    # Check for suspicious patterns
-    if text.isnumeric():
-        return False, "Translation cannot be only numbers"
+        if len(normalized_text) > 1000:
+            return False, "Translation is too long (maximum 1000 characters)"
 
-    # Check for too many repeated characters
-    if any(char * 10 in text for char in set(text)):
-        return False, "Translation contains too many repeated characters"
+        # Check for suspicious patterns
+        if normalized_text.isnumeric():
+            return False, "Translation cannot be only numbers"
 
-    # Character validation - use Unicode categories for better Kikuyu support
-    import unicodedata
+        # Check for too many repeated characters (Unicode safe)
+        if any(char * 10 in normalized_text for char in set(normalized_text) if char.isalpha()):
+            return False, "Translation contains too many repeated characters"
 
-    allowed_chars = set('.,!?;:\'"()-')  # Basic punctuation
+        # Enhanced character validation for Kikuyu
+        allowed_chars = set('.,!?;:\'"()-–—''""…')  # Extended punctuation
 
-    for char in text:
-        # Allow letters (including all Unicode letters with diacritics)
-        # Allow numbers, spaces and allowed punctuation
-        if (char.isalpha() or
-            char.isdigit() or
-            char.isspace() or
-            char in allowed_chars or
-            unicodedata.category(char) in ['Mn', 'Mc']):  # Mark categories for diacritics
-            continue
-        else:
-            return False, f"Translation contains invalid character: '{char}'"
+        for char in normalized_text:
+            # Allow letters (including all Unicode letters with diacritics)
+            # Allow numbers, spaces and allowed punctuation
+            if (char.isalpha() or
+                char.isdigit() or
+                char.isspace() or
+                char in allowed_chars or
+                unicodedata.category(char) in ['Mn', 'Mc', 'Lm']):  # Mark categories + letter modifiers
+                continue
+            else:
+                # More informative error for special characters
+                char_name = unicodedata.name(char, f"U+{ord(char):04X}")
+                return False, f"Translation contains unsupported character: '{char}' ({char_name})"
 
-    return True, ""
+        return True, ""
+    except Exception as e:
+        # Fallback validation if Unicode processing fails
+        try:
+            basic_text = text.strip()
+            if len(basic_text) < 2:
+                return False, "Translation is too short"
+            if len(basic_text) > 1000:
+                return False, "Translation is too long"
+            return True, ""
+        except Exception:
+            return False, "Translation contains invalid characters"

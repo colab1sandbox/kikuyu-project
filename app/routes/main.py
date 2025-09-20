@@ -31,29 +31,23 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
-    """Landing page with enhanced statistics"""
+    """Landing page with optimized statistics - low latency"""
     try:
-        # Get comprehensive statistics
-        analytics_service = AnalyticsService()
-        stats = analytics_service.get_overview_metrics()
+        # Use fast cached stats instead of complex analytics
+        from app.utils import get_translation_stats
+        stats = get_translation_stats()
 
-        # Get recent activity summary
-        recent_activity = get_recent_activity_summary()
-
-        return render_template(
-            'index.html',
-            stats=stats,
-            recent_activity=recent_activity
-        )
+        return render_template('index.html', stats=stats)
     except Exception as e:
         logging.error(f"Error in index route: {e}")
-        # Fallback to basic stats
-        basic_stats = {
-            'total_prompts': Prompt.query.filter_by(status='active').count(),
-            'total_translations': Translation.query.count(),
-            'total_users': User.query.count()
+        # Fallback to minimal stats to prevent errors
+        fallback_stats = {
+            'total_prompts': 0,
+            'total_translations': 0,
+            'total_users': 0,
+            'approved_translations': 0
         }
-        return render_template('index.html', stats=basic_stats, recent_activity={})
+        return render_template('index.html', stats=fallback_stats)
 
 
 @main_bp.route('/translate', methods=['GET', 'POST'])
@@ -63,18 +57,19 @@ def translate():
 
 @main_bp.route('/translate-v2', methods=['GET', 'POST'])
 def translate_v2():
-    """Main translation interface with smart prompt selection"""
-    user = get_or_create_user()
+    """Main translation interface with smart prompt selection - optimized and error-safe"""
+    try:
+        user = get_or_create_user()
 
-    # Check if user can submit
-    can_submit, reason = can_user_submit(user)
-    if not can_submit and request.method == 'POST':
-        flash(reason, 'error')
-        return redirect(url_for('main.translate'))
+        # Check if user can submit
+        can_submit, reason = can_user_submit(user)
+        if not can_submit and request.method == 'POST':
+            flash(reason, 'error')
+            return redirect(url_for('main.translate'))
 
-    form = TranslationForm()
+        form = TranslationForm()
 
-    if request.method == 'GET':
+        if request.method == 'GET':
         try:
             # Use CSV prompt manager for prompt selection
             csv_manager = CSVPromptManager()
@@ -173,20 +168,48 @@ def translate_v2():
             stats = get_translation_stats()
             return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats, error='form')
 
+    except Exception as e:
+        logging.error(f"Error in translate route: {e}")
+        # Fallback to prevent crashes
+        try:
+            user = get_or_create_user()
+            form = TranslationForm()
+            from app.utils import get_translation_stats
+            stats = get_translation_stats()
+
+            # Try to get a basic prompt
+            prompt = Prompt.query.first()
+            if prompt:
+                form.prompt_id.data = prompt.id
+
+            flash('An error occurred. Please try again.', 'error')
+            return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats)
+        except Exception:
+            # Ultimate fallback
+            return redirect(url_for('main.index'))
+
 
 @main_bp.route('/translate-success/<int:translation_id>')
 def translate_success(translation_id):
     """Success page after translation submission with thank you message"""
-    user = get_or_create_user()
+    try:
+        user = get_or_create_user()
 
-    # Get basic stats for display
-    from app.utils import get_translation_stats
-    stats = get_translation_stats()
+        # Get basic stats for display
+        from app.utils import get_translation_stats
+        stats = get_translation_stats()
 
-    return render_template('translate_success.html',
-                         user=user,
-                         translation_id=translation_id,
-                         stats=stats)
+        return render_template('translate_success.html',
+                             user=user,
+                             translation_id=translation_id,
+                             stats=stats)
+    except Exception as e:
+        logging.error(f"Error in translate_success route: {e}")
+        # Fallback to basic success page
+        return render_template('translate_success.html',
+                             user={'submission_count': 0},
+                             translation_id=translation_id,
+                             stats={'total_translations': 0})
 
 
 @main_bp.route('/thank-you')
