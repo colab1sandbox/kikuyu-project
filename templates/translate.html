@@ -161,6 +161,17 @@
             <p class="text-sm text-blue-800"><strong>Important:</strong> Think about what the English phrase means, then express that in Kikuyu</p>
         </div>
 
+        <!-- Error Messages -->
+        {% if error == 'duplicate' %}
+        <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+            <p class="text-sm text-red-800"><strong>Duplicate Translation:</strong> This translation already exists. Please try a different translation or skip this prompt.</p>
+        </div>
+        {% elif error == 'validation' %}
+        <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+            <p class="text-sm text-red-800"><strong>Invalid Input:</strong> Please check your translation and try again.</p>
+        </div>
+        {% endif %}
+
 
         <!-- English Prompt -->
         <div class="prompt-card p-4 mb-4">

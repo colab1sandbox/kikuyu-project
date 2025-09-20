@@ -71,6 +71,16 @@ class Translation(db.Model):
     ip_address = db.Column(db.String(200))  # For tracking and moderation (supports proxy chains)
     user_agent = db.Column(db.String(500))  # For tracking (longer user agents)
 
+    # Database indexes for performance optimization
+    __table_args__ = (
+        # Composite index for duplicate detection (prompt_id + kikuyu_text)
+        db.Index('idx_translation_duplicate_check', 'prompt_id', db.text('LOWER(kikuyu_text)')),
+        # Index for status queries
+        db.Index('idx_translation_status', 'status'),
+        # Index for user queries
+        db.Index('idx_translation_user', 'user_id'),
+    )
+
     def __repr__(self):
         return f'<Translation {self.id}: {self.kikuyu_text[:30]}...>'
 
