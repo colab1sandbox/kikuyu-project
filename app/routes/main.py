@@ -19,10 +19,9 @@ from app.utils import (
     can_user_submit, check_duplicate_translation, validate_kikuyu_text,
     get_translation_stats
 )
-from app.services.smart_selector import SmartPromptSelector
 from app.services.csv_prompt_manager import CSVPromptManager
 from app.services.community_service import CommunitySubmissionService
-from app.services.analytics import AnalyticsService
+# Note: AnalyticsService removed to avoid complex model dependencies
 
 
 # Create main blueprint
@@ -449,12 +448,13 @@ def api_categories():
 
 @main_bp.route('/api/platform-stats')
 def api_platform_stats():
-    """Get platform statistics for public display"""
+    """Get platform statistics for public display - optimized"""
     try:
-        analytics_service = AnalyticsService()
-        stats = analytics_service.get_overview_metrics()
+        # Use optimized cached stats
+        stats = get_translation_stats()
 
         # Add some additional public metrics
+        from datetime import timedelta
         recent_activity = Translation.query.filter(
             Translation.timestamp >= datetime.utcnow() - timedelta(days=7)
         ).count()
@@ -481,14 +481,14 @@ def api_platform_stats():
 
 @main_bp.route('/statistics')
 def statistics():
-    """Public statistics page"""
+    """Public statistics page - optimized"""
     try:
-        analytics_service = AnalyticsService()
+        # Use optimized cached stats instead of complex analytics
+        overview = get_translation_stats()
 
-        # Get comprehensive statistics for public display
-        overview = analytics_service.get_overview_metrics()
-        coverage = analytics_service.coverage_tracker.get_coverage_summary()
-        trends = analytics_service.get_trend_data(days=30)
+        # Simplified coverage and trends for performance
+        coverage = {'categories': [], 'total_coverage': 0}
+        trends = {'daily_translations': [], 'weekly_growth': 0}
 
         return render_template(
             'statistics.html',

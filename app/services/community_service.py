@@ -12,7 +12,7 @@ from flask import current_app, request
 from sqlalchemy import and_, or_, desc
 
 from app.models import (
-    CommunitySubmission, Prompt, User, DomainCoverage,
+    CommunitySubmission, Prompt, User,
     AdminAction, db
 )
 
