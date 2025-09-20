@@ -1,11 +1,15 @@
 import uuid
 import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import session, request
 from functools import wraps
 from sqlalchemy import text
 from app import db
 from app.models import User, Translation, Prompt
+
+# Simple in-memory cache for stats
+_stats_cache = {'data': None, 'timestamp': None}
+_cache_duration = timedelta(minutes=5)  # Cache for 5 minutes
 
 def get_or_create_user() -> User:
     """Get or create a user based on session ID - optimized"""
@@ -137,20 +141,51 @@ def can_user_submit(user: User) -> tuple[bool, str]:
     return True, ""
 
 def get_translation_stats() -> dict:
-    """Get overall translation statistics"""
-    total_translations = Translation.query.count()
-    pending_translations = Translation.query.filter_by(status='pending').count()
-    approved_translations = Translation.query.filter_by(status='approved').count()
-    total_users = User.query.count()
-    total_prompts = Prompt.query.count()
+    """Get overall translation statistics - cached for performance"""
+    global _stats_cache
 
-    return {
-        'total_translations': total_translations,
-        'pending_translations': pending_translations,
-        'approved_translations': approved_translations,
-        'total_users': total_users,
-        'total_prompts': total_prompts
-    }
+    # Check if cache is valid
+    now = datetime.utcnow()
+    if (_stats_cache['data'] is not None and
+        _stats_cache['timestamp'] is not None and
+        now - _stats_cache['timestamp'] < _cache_duration):
+        return _stats_cache['data']
+
+    try:
+        # Fast single query approach
+        total_translations = db.session.scalar(text("SELECT COUNT(*) FROM translation"))
+        approved_translations = db.session.scalar(text("SELECT COUNT(*) FROM translation WHERE status = 'approved'"))
+        total_users = db.session.scalar(text("SELECT COUNT(*) FROM \"user\""))
+        total_prompts = db.session.scalar(text("SELECT COUNT(*) FROM prompt"))
+
+        stats = {
+            'total_translations': total_translations or 0,
+            'pending_translations': (total_translations or 0) - (approved_translations or 0),
+            'approved_translations': approved_translations or 0,
+            'total_users': total_users or 0,
+            'total_prompts': total_prompts or 0
+        }
+
+        # Update cache
+        _stats_cache['data'] = stats
+        _stats_cache['timestamp'] = now
+
+        return stats
+    except Exception:
+        # Fallback to avoid crashes
+        fallback = {
+            'total_translations': 0,
+            'pending_translations': 0,
+            'approved_translations': 0,
+            'total_users': 0,
+            'total_prompts': 0
+        }
+
+        # Cache fallback too
+        _stats_cache['data'] = fallback
+        _stats_cache['timestamp'] = now
+
+        return fallback
 
 def export_translations_data(status_filter: str = None) -> list:
     """

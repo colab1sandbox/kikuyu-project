@@ -7,14 +7,18 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'postgresql://neondb_owner:npg_IqfGwQAXN3l1@ep-empty-leaf-a1u0aj23-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # PostgreSQL Performance Optimizations
+    # PostgreSQL Performance Optimizations (Free Tier Optimized)
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_size': 10,
-        'pool_timeout': 30,
-        'pool_recycle': 300,  # Recycle connections every 5 minutes
-        'max_overflow': 20,
+        'pool_size': 3,  # Reduced for free tier
+        'pool_timeout': 20,  # Faster timeout
+        'pool_recycle': 600,  # Longer recycle for stability
+        'max_overflow': 5,  # Reduced overflow
         'pool_pre_ping': True,  # Verify connections before use
-        'echo': False  # Disable SQL logging in production
+        'echo': False,  # Disable SQL logging in production
+        'connect_args': {
+            'connect_timeout': 10,  # Connection timeout
+            'application_name': 'kikuyu_app'
+        }
     }
 
     # OpenRouter Configuration
