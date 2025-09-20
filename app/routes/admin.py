@@ -18,17 +18,17 @@ def dashboard():
     """Simple working admin dashboard"""
     try:
         # Get basic statistics from database
+        # Note: Rejected translations are no longer stored (returned to CSV pool)
         total_translations = db.session.query(Translation).count()
         pending_translations = db.session.query(Translation).filter_by(status='pending').count()
         approved_translations = db.session.query(Translation).filter_by(status='approved').count()
-        rejected_translations = db.session.query(Translation).filter_by(status='rejected').count()
         total_users = db.session.query(User).count()
 
         stats = {
             'total_translations': total_translations,
             'pending_translations': pending_translations,
             'approved_translations': approved_translations,
-            'rejected_translations': rejected_translations,
+            'rejected_translations': 0,  # No longer stored - returned to CSV pool
             'total_users': total_users
         }
 
@@ -101,10 +101,36 @@ def moderate_translation(translation_id):
     translation = Translation.query.get_or_404(translation_id)
     action = request.form.get('action')
 
-    if action in ['approve', 'reject']:
-        translation.status = 'approved' if action == 'approve' else 'rejected'
+    if action == 'approve':
+        # Approve and keep translation
+        translation.status = 'approved'
         db.session.commit()
-        flash(f'Translation {action}d successfully', 'success')
+        flash('Translation approved successfully', 'success')
+    elif action == 'reject':
+        # Return prompt back to CSV pool and delete rejected translation
+        try:
+            prompt = translation.prompt
+            if prompt:
+                # Return prompt back to CSV for reuse
+                csv_manager = CSVPromptManager()
+                # Generate the same ID that CSV manager uses (MD5 hash of text)
+                import hashlib
+                prompt_id = hashlib.md5(prompt.text.encode('utf-8')).hexdigest()[:12]
+                csv_manager.return_prompt_to_pool(prompt_id)
+
+                # Delete the rejected translation (don't store rejections)
+                db.session.delete(translation)
+                db.session.commit()
+
+                flash('Translation rejected and prompt returned to pool for reuse', 'success')
+            else:
+                # If no prompt found, just delete the translation
+                db.session.delete(translation)
+                db.session.commit()
+                flash('Translation rejected and removed', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error processing rejection: {str(e)}', 'error')
     else:
         flash('Invalid action', 'error')
 
@@ -222,7 +248,7 @@ def stats():
         by_status = {
             'pending': Translation.query.filter_by(status='pending').count(),
             'approved': Translation.query.filter_by(status='approved').count(),
-            'rejected': Translation.query.filter_by(status='rejected').count()
+            'rejected': 0  # No longer stored - rejected translations are deleted and returned to CSV pool
         }
 
         total_users = User.query.count()
