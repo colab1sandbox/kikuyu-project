@@ -69,103 +69,103 @@ def translate_v2():
         form = TranslationForm()
 
         if request.method == 'GET':
-        try:
-            # Use CSV prompt manager for prompt selection
-            csv_manager = CSVPromptManager()
-            prompt_data = csv_manager.get_next_prompt(user.session_id)
-
-            if not prompt_data:
-                flash('No prompts available at the moment. Please try again later.', 'error')
-                return redirect(url_for('main.index'))
-
-            # Store prompt in database if not already there
-            prompt = Prompt.query.filter_by(text=prompt_data['text']).first()
-            if not prompt:
-                prompt = Prompt(
-                    text=prompt_data['text'],
-                    category=prompt_data.get('category', 'csv_dataset'),
-                    source_type='csv_dataset',
-                    difficulty_level='medium'
-                )
-                db.session.add(prompt)
-                db.session.commit()
-
-            # Update prompt_data with database ID
-            prompt_data['id'] = prompt.id
-
-            form.prompt_id.data = prompt.id
-
-            # Add context for user experience
-            context = {
-                'selection_strategy': prompt_data.get('selection_strategy', 'balanced'),
-                'category': prompt.category,
-                'difficulty': prompt.difficulty_level,
-                'source_type': prompt.source_type
-            }
-
-            # Get basic stats for the interface
-            from app.utils import get_translation_stats
-            stats = get_translation_stats()
-
-            return render_template(
-                'translate.html',
-                form=form,
-                prompt=prompt,
-                user=user,
-                context=context,
-                stats=stats
-            )
-
-        except Exception as e:
-            logging.error(f"Error selecting prompt for user {user.id}: {e}")
-            flash('Error getting prompt. Please try again.', 'error')
-            return redirect(url_for('main.index'))
-
-    elif request.method == 'POST':
-        if form.validate_on_submit():
-            prompt_id = form.prompt_id.data
-            kikuyu_text = form.kikuyu_text.data
-
             try:
-                # Validate text
-                is_valid, error_msg = validate_kikuyu_text(kikuyu_text)
-                if not is_valid:
-                    prompt = Prompt.query.get(prompt_id)
-                    from app.utils import get_translation_stats
-                    stats = get_translation_stats()
-                    return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats, error='validation')
+                # Use CSV prompt manager for prompt selection
+                csv_manager = CSVPromptManager()
+                prompt_data = csv_manager.get_next_prompt(user.session_id)
 
-                # Check for duplicates
-                if check_duplicate_translation(kikuyu_text, prompt_id):
-                    # Handle duplicate in frontend with better UX
-                    prompt = Prompt.query.get(prompt_id)
-                    from app.utils import get_translation_stats
-                    stats = get_translation_stats()
-                    return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats, error='duplicate')
+                if not prompt_data:
+                    flash('No prompts available at the moment. Please try again later.', 'error')
+                    return redirect(url_for('main.index'))
 
-                # Save translation
-                translation = save_translation(prompt_id, kikuyu_text, user)
+                # Store prompt in database if not already there
+                prompt = Prompt.query.filter_by(text=prompt_data['text']).first()
+                if not prompt:
+                    prompt = Prompt(
+                        text=prompt_data['text'],
+                        category=prompt_data.get('category', 'csv_dataset'),
+                        source_type='csv_dataset',
+                        difficulty_level='medium'
+                    )
+                    db.session.add(prompt)
+                    db.session.commit()
 
-                # Log the submission
-                logging.info(f"Translation submitted: ID {translation.id}, User {user.session_id}")
+                # Update prompt_data with database ID
+                prompt_data['id'] = prompt.id
 
-                # Redirect to success page with smooth UX
-                return redirect(url_for('main.translate_success', translation_id=translation.id))
+                form.prompt_id.data = prompt.id
 
-            except Exception as e:
-                logging.error(f"Error saving translation: {e}")
-                prompt = Prompt.query.get(prompt_id)
+                # Add context for user experience
+                context = {
+                    'selection_strategy': prompt_data.get('selection_strategy', 'balanced'),
+                    'category': prompt.category,
+                    'difficulty': prompt.difficulty_level,
+                    'source_type': prompt.source_type
+                }
+
+                # Get basic stats for the interface
                 from app.utils import get_translation_stats
                 stats = get_translation_stats()
-                return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats, error='server')
 
-        else:
-            # Form validation failed
-            prompt_id = form.prompt_id.data
-            prompt = Prompt.query.get(prompt_id) if prompt_id else None
-            from app.utils import get_translation_stats
-            stats = get_translation_stats()
-            return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats, error='form')
+                return render_template(
+                    'translate.html',
+                    form=form,
+                    prompt=prompt,
+                    user=user,
+                    context=context,
+                    stats=stats
+                )
+
+            except Exception as e:
+                logging.error(f"Error selecting prompt for user {user.id}: {e}")
+                flash('Error getting prompt. Please try again.', 'error')
+                return redirect(url_for('main.index'))
+
+        elif request.method == 'POST':
+            if form.validate_on_submit():
+                prompt_id = form.prompt_id.data
+                kikuyu_text = form.kikuyu_text.data
+
+                try:
+                    # Validate text
+                    is_valid, error_msg = validate_kikuyu_text(kikuyu_text)
+                    if not is_valid:
+                        prompt = Prompt.query.get(prompt_id)
+                        from app.utils import get_translation_stats
+                        stats = get_translation_stats()
+                        return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats, error='validation')
+
+                    # Check for duplicates
+                    if check_duplicate_translation(kikuyu_text, prompt_id):
+                        # Handle duplicate in frontend with better UX
+                        prompt = Prompt.query.get(prompt_id)
+                        from app.utils import get_translation_stats
+                        stats = get_translation_stats()
+                        return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats, error='duplicate')
+
+                    # Save translation
+                    translation = save_translation(prompt_id, kikuyu_text, user)
+
+                    # Log the submission
+                    logging.info(f"Translation submitted: ID {translation.id}, User {user.session_id}")
+
+                    # Redirect to success page with smooth UX
+                    return redirect(url_for('main.translate_success', translation_id=translation.id))
+
+                except Exception as e:
+                    logging.error(f"Error saving translation: {e}")
+                    prompt = Prompt.query.get(prompt_id)
+                    from app.utils import get_translation_stats
+                    stats = get_translation_stats()
+                    return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats, error='server')
+
+            else:
+                # Form validation failed
+                prompt_id = form.prompt_id.data
+                prompt = Prompt.query.get(prompt_id) if prompt_id else None
+                from app.utils import get_translation_stats
+                stats = get_translation_stats()
+                return render_template('translate.html', form=form, prompt=prompt, user=user, stats=stats, error='form')
 
     except Exception as e:
         logging.error(f"Error in translate route: {e}")
